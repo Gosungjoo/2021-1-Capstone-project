@@ -1,13 +1,12 @@
-from django.shortcuts import render
+
 import json
 from .models import ChannelList
 from django.views import View
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 import time
 import requests
-from bs4 import BeautifulSoup
+from datetime import datetime
 from selenium import webdriver as wd
-from selenium.webdriver.common.keys import Keys
 import chromedriver_autoinstaller
 
 # Create your views here.
@@ -15,6 +14,7 @@ import chromedriver_autoinstaller
 
 class ChannelListView(View):
     def post(self,request):
+        start_time = datetime.now()
         driver_path = chromedriver_autoinstaller.install()
         ChannelList.objects.all().delete()
 
@@ -30,9 +30,7 @@ class ChannelListView(View):
 
         data = json.loads(request.body)
         url = f'https://www.youtube.com/{data["channel"]}'
-        #req = requests.get(
-        #    f'https://www.youtube.com/watch?v={data["channel"]}'
-        #)
+
         driver.implicitly_wait(3)
         driver.get(url)
         print(driver.current_url)
@@ -40,26 +38,40 @@ class ChannelListView(View):
         imgs = []
         titles = []
         subscribers = []
-        cnt = 1
+        try:
+            nodata = driver.find_element_by_xpath('//*[@id="message"]').text
+            if nodata == '이 채널에는 다른 채널이 표시되지 않습니다.':
+                driver.quit()
+                end_time = datetime.now()
+                print((end_time-start_time).seconds)
+                return JsonResponse({'channel_info': 'no', 'img': 'no', 'title': 'no',
+                          'subscribers': 'no'})
+
+        except:
+            pass
+
+
         try:
 
+            driver.execute_script('window.scrollBy(0, 1080);')
+            time.sleep(0.5)
+
             channel_info = driver.find_elements_by_xpath('//*[@id="channel-info"]')
+
             for ci in channel_info:
-                print(ci.get_attribute('href'))
-                channel_infos.append(ci.get_attribute('href'))
                 ig = ci.find_element_by_id('img').get_attribute('src')
-                print(ig)
+                if ig is None:
+                    break
+                channel_infos.append(ci.get_attribute('href'))
                 imgs.append(ig)
                 tt = ci.find_element_by_id('title').text
-                print(tt)
                 titles.append(tt)
                 sc = ci.find_element_by_id('thumbnail-attribution').text
-                print(sc)
                 subscribers.append(sc)
-                cnt += 1
-                if cnt == 20:
-                    break
+            print(len(channel_infos))
             driver.quit()
+            end_time = datetime.now()
+            print((end_time - start_time).seconds)
             return JsonResponse({'channel_info': channel_infos, 'img': imgs, 'title': titles,
                                  'subscribers': subscribers})
         except:
@@ -71,25 +83,3 @@ class ChannelListView(View):
             else:
                 return JsonResponse({'channel_info': channel_infos, 'img': imgs, 'title': titles,
                                      'subscribers': subscribers})
-
-
-
-
-
-
-
-        '''
-        html = req.text
-        #print(html)
-        soup = BeautifulSoup(html, 'html.parser')
-        post_link = soup.find_all(class_='style-scope ytd-watch-flexy')
-        print(post_link)
-        for item in post_link:
-            ChannelList(
-                channelLink=item,
-            ).save()
-            print(item)
-        return HttpResponse(status=200)
-        '''
-    def get(self, request):
-        return JsonResponse({'channel_link':list(ChannelList.objects.values())},status=200)
