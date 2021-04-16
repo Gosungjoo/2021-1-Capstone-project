@@ -1,7 +1,7 @@
 from django.urls import path
-from .views import ChannelListView#,HistoryView
+from .views import ChannelListView,CommentView
 
 urlpatterns = [
     path('/subscribers', ChannelListView.as_view()),
-    #path('/history',HistoryView()),
+    path('/comment/url',CommentView.as_view()),
 ]

@@ -1,8 +1,12 @@
+#-*-coding:utf-8-*-
 
 import json
 from .models import ChannelList
 from django.views import View
 from django.http import JsonResponse
+import pandas
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 import time
 import requests
 from datetime import datetime
@@ -21,6 +25,7 @@ def setting_chrome():
     options.add_argument('lang=ko_KR')
     options.add_argument('disable-gpu')
     options.add_argument('window-size=1920,1080')
+
     # options.add_argument(
     #    "user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
 
@@ -28,12 +33,44 @@ def setting_chrome():
     return driver
 
 
+class CommentView(View):
+
+    def post(self, request):
+        api_key = 'AIzaSyC4poxuFWcR4mChE66JBgKDjbGUFjmRas4'
+        youtube = build('youtube', 'v3', developerKey=api_key)
+        data = json.loads(request.body)
+        url = data['comments']
+        videoId = url[32:]
+
+        results = youtube.commentThreads().list(
+            videoId=videoId,
+            order='relevance',
+            part='snippet',
+            textFormat='plainText',
+            maxResults=100,
+        ).execute()
+        link = []
+        while results:
+            for item in results['items']:
+                comment = item['snippet']['topLevelComment']['snippet']['authorChannelUrl']
+                print(comment)
+                link.append(comment)
+            if 'nextPageToken' in results:
+                break
+            else:
+                break
+
+        return JsonResponse({'link_list':link})
+
+
 class ChannelListView(View):
     def post(self,request):
         driver = setting_chrome()
 
+        #127.0.0.1:8000/ch/subscribers
+
         data = json.loads(request.body)
-        url = f'https://www.youtube.com/{data["channel"]}'
+        url = data['channel']
 
         driver.implicitly_wait(3)
         driver.get(url)
