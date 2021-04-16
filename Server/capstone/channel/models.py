@@ -8,3 +8,7 @@ class ChannelList(models.Model):
 
     class Meta:
         db_table = "channel_link"
+
+
+class HistoryList(models.Model):
+    gi = 5
