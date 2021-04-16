@@ -73,7 +73,7 @@ class ChannelListView(View):
                 return JsonResponse({'channel_info': channel_infos, 'img': imgs, 'title': titles,
                                      'subscribers': subscribers})
 
-
+'''
 class HistoryView(View):
     def post(self,request): # //*[@id="progress"] //*[@id="overlays"]/ytd-thumbnail-overlay-resume-playback-renderer //*[@id="overlays"]/ytd-thumbnail-overlay-resume-playback-renderer
         driver = setting_chrome()
@@ -96,7 +96,7 @@ class HistoryView(View):
         except:
             asdf = 5
 
-
+'''
 
 
 
