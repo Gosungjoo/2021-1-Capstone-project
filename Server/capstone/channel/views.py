@@ -79,10 +79,39 @@ def DoRun(link):
             executor.submit(DataSearch, url)
 '''
 
+
+def RankingSubscribes(channelIds):
+    api_key = 'AIzaSyC4poxuFWcR4mChE66JBgKDjbGUFjmRas4'
+    youtube = build('youtube', 'v3', developerKey=api_key)
+
+    idRank = {}
+    for channelId in channelIds:
+        try:
+
+            results = youtube.subscriptions().list(
+                part='snippet',
+                channelId=channelId,
+                maxResults=100,
+
+            ).execute()
+            for item in results['items']:
+                channelID = item['snippet']['resourceId']['channelId']
+                if channelID in idRank:
+                    idRank[channelID][-1] += 1
+                    continue
+                title = item['snippet']['title']
+                img = item['snippet']['thumbnails']['default']['url']
+                idRank[channelID] = [channelID,title,img,0]
+
+        except:
+            pass
+    print("this is REUSULT")
+    final = list(idRank.values())
+    print(final)
+    return final
+
 class CommentView(View):
     def post(self, request):
-        ChannelList.objects.all().delete()
-        print("I'm in!")
         api_key = 'AIzaSyC4poxuFWcR4mChE66JBgKDjbGUFjmRas4'
         youtube = build('youtube', 'v3', developerKey=api_key)
         data = json.loads(request.body)
@@ -94,21 +123,47 @@ class CommentView(View):
             order='relevance',
             part='snippet',
             textFormat='plainText',
-            maxResults=100,
+            maxResults=10,
         ).execute()
-        link = []
-        while results:
-            for item in results['items']:
-                comment = item['snippet']['topLevelComment']['snippet']['authorChannelUrl']
-                link.append(comment)
-            if 'nextPageToken' in results:
-                break
-            else:
-                break
-        return JsonResponse({'urls': link})
+        channelIds = []
+
+        for item in results['items']:
+            #comment = item['snippet']['topLevelComment']['snippet']['authorChannelUrl']
+            channelId = item['snippet']['topLevelComment']['snippet']['authorChannelId']['value']
+            channelIds.append(channelId)
+        sendout = RankingSubscribes(channelIds)
+        return JsonResponse({'datas': sendout})
 
 
 class ChannelListView(View):
+    def post(self,request):
+        api_key = 'AIzaSyC4poxuFWcR4mChE66JBgKDjbGUFjmRas4'
+        youtube = build('youtube', 'v3', developerKey=api_key)
+        data = json.loads(request.body)
+        channelId = data['channelId']
+        try:
+            results = youtube.subscriptions().list(
+                part='snippet',
+                channelId=channelId,
+                maxResults=100,
+
+            ).execute()
+            subscribesData=[]
+            for item in results['items']:
+                subdata = []
+                channelID = item['snippet']['resourceId']['channelId']
+                print(channelID)
+                title = item['snippet']['title']
+                print(title)
+                img = item['snippet']['thumbnails']['default']['url']
+                print(img)
+                print('----------------------------')
+                subdata = [channelID,img,title]
+                subscribesData.append(subdata)
+            return JsonResponse({'subscribesData':subscribesData})
+        except:
+            return JsonResponse({'subscribesData':''})
+    '''
     def post(self,request):
         driver = setting_chrome()
 
@@ -154,6 +209,7 @@ class ChannelListView(View):
             else:
                 return JsonResponse({'channel_info': channel_infos, 'img': imgs, 'title': titles,
                                      'subscribers': subscribers})
+    '''
 
 '''
 class HistoryView(View):
