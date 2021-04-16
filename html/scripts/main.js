@@ -5,23 +5,21 @@ myImage.onclick = function() {
     if(mySrc === 'images/bonobono.png') {
       myImage.setAttribute ('src','images/bonoicon.png');
 
-      $.post({
+      $.ajax({
         url: `http://127.0.0.1:8000/ch/comment`,
         method: 'POST',
         async : true,
         data : JSON.stringify({ "comments" : "www.youtube.com/watch?v=Cba_0j-v-CQ",}),
         dataType :'json',
         
-
         error: function (request) {
-          console.log(request);
-          console.log(JSON.stringify(request));
+          alert(JSON.parse(request));
       },
       success: function (res) {
-        console.log(res);
+          alert(" Done !"+ JSON.parse(res));
       }
     });
-    (" Done !zz");    
+        
 
     } else {
       myImage.setAttribute ('src','images/bonobono.png');
@@ -29,6 +27,14 @@ myImage.onclick = function() {
     }
 }
 
+
+router.get('/test', function(req, res, next){
+
+  console.log('test');
+
+  res.send('hello world');
+
+})
 
 function getCurrentTabUrl(callback) {
 
