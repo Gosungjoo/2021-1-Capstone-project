@@ -4,11 +4,10 @@ from django.db import models
 
 
 class ChannelList(models.Model):
-    channelLink = models.CharField(max_length=500)
+    channel_info = models.CharField(max_length=500)
+    img = models.CharField(max_length=500)
+    title = models.CharField(max_length=500)
+    subscribers = models.CharField(max_length=500)
 
     class Meta:
         db_table = "channel_link"
-
-
-class HistoryList(models.Model):
-    gi = 5

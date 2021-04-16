@@ -3,14 +3,16 @@
 import json
 from .models import ChannelList
 from django.views import View
-from django.http import JsonResponse
-import pandas
+from django.http import JsonResponse, HttpResponse
+import asyncio
 from googleapiclient.discovery import build
+from concurrent.futures import ThreadPoolExecutor
 from googleapiclient.errors import HttpError
 import time
 import requests
 from datetime import datetime
 from selenium import webdriver as wd
+import threading
 import chromedriver_autoinstaller
 
 # Create your views here.
@@ -32,15 +34,60 @@ def setting_chrome():
     driver = wd.Chrome(executable_path=driver_path, options=options)
     return driver
 
+'''
+def DataSearch(link):
+
+    driver = setting_chrome()
+    print("IN DATASEARCH")
+    # 127.0.0.1:8000/ch/subscribers
+
+    url = link
+
+    driver.implicitly_wait(3)
+    driver.get(url)
+    print(driver.current_url)
+    driver.execute_script('window.scrollBy(0, 1080);')
+    time.sleep(0.5)
+
+    channel_info = driver.find_elements_by_xpath('//*[@id="channel-info"]')
+
+    for ci in channel_info:
+        ig = ci.find_element_by_id('img').get_attribute('src')
+        if ig is None:
+            break
+        item_0 = ci.get_attribute('href')
+        item_1 = ig
+        tt = ci.find_element_by_id('title').text
+        item_2 = tt
+        sc = ci.find_element_by_id('thumbnail-attribution').text
+        item_3 = sc
+        ChannelList(
+            channel_info=item_0,
+            img=item_1,
+            title=item_2,
+            subscribers=item_3
+        ).save()
+
+    driver.quit()
+    return
+
+
+def DoRun(link):
+    print("IN DORUN")
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        for url in link:
+            executor.submit(DataSearch, url)
+'''
 
 class CommentView(View):
-
     def post(self, request):
+        ChannelList.objects.all().delete()
+        print("I'm in!")
         api_key = 'AIzaSyC4poxuFWcR4mChE66JBgKDjbGUFjmRas4'
         youtube = build('youtube', 'v3', developerKey=api_key)
         data = json.loads(request.body)
         url = data['comments']
-        videoId = url[32:]
+        videoId = url[24:]
 
         results = youtube.commentThreads().list(
             videoId=videoId,
@@ -53,14 +100,12 @@ class CommentView(View):
         while results:
             for item in results['items']:
                 comment = item['snippet']['topLevelComment']['snippet']['authorChannelUrl']
-                print(comment)
                 link.append(comment)
             if 'nextPageToken' in results:
                 break
             else:
                 break
-
-        return JsonResponse({'link_list':link})
+        return JsonResponse({'urls': link})
 
 
 class ChannelListView(View):
