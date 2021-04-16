@@ -114,8 +114,10 @@ class CommentView(View):
     def post(self, request):
         api_key = 'AIzaSyC4poxuFWcR4mChE66JBgKDjbGUFjmRas4'
         youtube = build('youtube', 'v3', developerKey=api_key)
+
         data = json.loads(request.body)
         url = data['comments']
+        print(url)
         videoId = url[24:]
 
         results = youtube.commentThreads().list(
@@ -132,7 +134,8 @@ class CommentView(View):
             channelId = item['snippet']['topLevelComment']['snippet']['authorChannelId']['value']
             channelIds.append(channelId)
         sendout = RankingSubscribes(channelIds)
-        return JsonResponse({'datas': sendout})
+        hi = {'text':'plz'}
+        return JsonResponse({'datas':sendout})
 
 
 class ChannelListView(View):
