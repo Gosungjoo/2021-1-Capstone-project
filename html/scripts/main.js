@@ -7,21 +7,17 @@ myImage.onclick = function() {
 
       $.ajax({
         url: `http://127.0.0.1:8000/ch/comment`,
-        method: 'GET',
+        method: 'POST',
         async : true,
-        data : { comments : "yourudsfa.com/",},
-        dataType : 'json',
+        data : JSON.stringify({ "comments" : "www.youtube.com/watch?v=Cba_0j-v-CQ",}),
+        dataType :'json',
         
-        success : function (res) {
-          alert("hi");
-            // 서번단에서 HTML을 반환해서 기존 페이지를 깜빡임없이 새로 고친다.
-            document.querySelector("#appendHtml").innerHTML = res;
-
-
-        },
-        error: function (xhr) {
-            alert("fail");
-        }
+        error: function (request) {
+          alert(JSON.parse(request));
+      },
+      success: function (res) {
+          alert(" Done !"+ JSON.parse(res));
+      }
     });
         
 
@@ -30,3 +26,43 @@ myImage.onclick = function() {
 
     }
 }
+
+
+router.get('/test', function(req, res, next){
+
+  console.log('test');
+
+  res.send('hello world');
+
+})
+
+function getCurrentTabUrl(callback) {
+
+  var queryInfo = {
+  
+    active: true,
+  
+    currentWindow: true
+  
+  };
+  
+  
+  chrome.tabs.query(queryInfo, function(tabs) {
+  
+    var tab = tabs[0];
+  
+    var url = tab.url;
+  
+    callback(url);
+  
+  });
+  
+  }
+  
+  
+  function renderURL(statusText,) {
+  
+  document.getElementById('urls').textContent = statusText;
+  
+  }
+  
