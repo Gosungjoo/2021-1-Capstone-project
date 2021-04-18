@@ -17,7 +17,7 @@ import chromedriver_autoinstaller
 
 # Create your views here.
 
-
+'''
 def setting_chrome():
     driver_path = chromedriver_autoinstaller.install()
     ChannelList.objects.all().delete()
@@ -34,7 +34,7 @@ def setting_chrome():
     driver = wd.Chrome(executable_path=driver_path, options=options)
     return driver
 
-'''
+
 def DataSearch(link):
 
     driver = setting_chrome()
@@ -107,6 +107,9 @@ def RankingSubscribes(channelIds):
             pass
     print("this is REUSULT")
     final = list(idRank.values())
+
+    final.sort(key=lambda data:data[-1], reverse=True)
+
     print(final)
     return final
 
@@ -125,7 +128,7 @@ class CommentView(View):
             order='relevance',
             part='snippet',
             textFormat='plainText',
-            maxResults=10,
+            maxResults=50,
         ).execute()
         channelIds = []
 
