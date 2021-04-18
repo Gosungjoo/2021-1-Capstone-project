@@ -1,0 +1,67 @@
+html {
+    background-color: rgb(255, 255, 255);
+
+
+}
+
+
+/* TABLE(subscribe)  */
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-baqh{text-align:center;vertical-align:top}
+/* TABLE(subscribe)---end */
+
+
+
+
+/* infomation  */
+p {
+    color: #000000;
+  }
+
+  h1 {
+    color: rgb(0, 0, 0);
+    
+    }
+
+
+  h3 {
+    margin: 0;
+    padding: 20px 0;
+    color: rgb(0, 0, 0);
+    text-shadow: 3px 3px 1px rgb(150, 67, 67);
+  }
+h2 {
+color: rgb(0, 0, 0);
+
+}
+/* infomation --- end  */
+
+
+
+body {
+    width: 300px;
+    margin: 0 center;
+    background-color: rgb(255, 255, 255);
+    padding: 0 40px 20px 20px;
+    border: 5px solid black;
+  }
+
+img{
+    display: block;
+    margin: 0 auto;
+
+    
+}
+
+table {
+  border-spacing: 0px;
+  border-collapse: separate;
+}
+table td {
+  width: 100px;
+  background:rgb(241, 243, 248);
+}
