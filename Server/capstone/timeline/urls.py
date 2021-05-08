@@ -1,6 +1,6 @@
 from django.urls import path
-#from .views import ChannelListView,CommentView
+from .views import TimelineView
 
 urlpatterns = [
-
+    path('/comment',TimelineView.as_view()),
 ]
