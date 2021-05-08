@@ -4,7 +4,15 @@ var scribeindex;
 
 
 
+
+
+
+
+
 myImage.onclick = function() {
+
+  
+
     let mySrc = myImage.getAttribute('src');
     if(mySrc == 'images/mainlogo(gray).png') {  // gray
       myImage.setAttribute ('src','images/mainlogo.png'); //red
@@ -12,6 +20,7 @@ myImage.onclick = function() {
       getCurrentTabUrl(function(youtubeurl,callback) {
         alert(youtubeurl.substr(8,));    
         renderURL(youtubeurl);
+        
         
         
         $.ajax({
@@ -109,25 +118,7 @@ function renderURL(statusText) {
 
 
 
-document.addEventListener('DOMContentLoaded', function() {
 
-  // when click, get current page link
-
-
-  
-  var link = document.getElementById('getUrl');
-
-
-  link.addEventListener('click', function() {
-    getCurrentTabUrl(function(url) {
-      renderURL(url);
-
-    });
-
-  });
-
-
-});
 document.addEventListener('DOMContentLoaded', function() {
 
   var link = document.getElementById('subscribe');
@@ -169,4 +160,5 @@ function addRow(LinkSource,name,imgUrl,rank) {
   newCell2.innerHTML = "<a href=" +Link+ " target = blank> &nbsp&nbsp&nbsp<b>" +name+ "</b> ";
   //newCell3.innerHTML = rank;
 }
+
 
