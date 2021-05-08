@@ -17,7 +17,7 @@ import chromedriver_autoinstaller
 
 # Create your views here.
 
-'''
+
 def setting_chrome():
     driver_path = chromedriver_autoinstaller.install()
     ChannelList.objects.all().delete()
@@ -77,7 +77,7 @@ def DoRun(link):
     with ThreadPoolExecutor(max_workers=10) as executor:
         for url in link:
             executor.submit(DataSearch, url)
-'''
+
 
 
 def RankingSubscribes(channelIds):
@@ -87,7 +87,7 @@ def RankingSubscribes(channelIds):
     idRank = {}
     for channelId in channelIds:
         try:
-
+            start = time.time()
             results = youtube.subscriptions().list(
                 part='snippet',
                 channelId=channelId,
@@ -102,7 +102,8 @@ def RankingSubscribes(channelIds):
                 title = item['snippet']['title']
                 img = item['snippet']['thumbnails']['default']['url']
                 idRank[channelID] = [channelID,title,img,0]
-
+            end = time.time()
+            print(str(end-start)+' sec')
         except:
             pass
     print("this is REUSULT")
@@ -137,11 +138,12 @@ class CommentView(View):
             channelId = item['snippet']['topLevelComment']['snippet']['authorChannelId']['value']
             channelIds.append(channelId)
         sendout = RankingSubscribes(channelIds)
-        hi = {'text':'plz'}
+
         return JsonResponse({'datas':sendout})
 
 
 class ChannelListView(View):
+    '''
     def post(self,request):
         api_key = 'AIzaSyC4poxuFWcR4mChE66JBgKDjbGUFjmRas4'
         youtube = build('youtube', 'v3', developerKey=api_key)
@@ -169,8 +171,10 @@ class ChannelListView(View):
             return JsonResponse({'subscribesData':subscribesData})
         except:
             return JsonResponse({'subscribesData':''})
+
     '''
     def post(self,request):
+        start = time.time()
         driver = setting_chrome()
 
         #127.0.0.1:8000/ch/subscribers
@@ -204,10 +208,13 @@ class ChannelListView(View):
                 subscribers.append(sc)
             print(len(channel_infos))
             driver.quit()
+            end = time.time()
+            print(end-start+' sec')
             return JsonResponse({'channel_info': channel_infos, 'img': imgs, 'title': titles,
                                  'subscribers': subscribers})
         except:
             driver.quit()
+            print(str(end - start) + ' sec')
             print("No Subscribes data")
             if len(channel_infos) == 0:
                 return JsonResponse({'channel_info': 'no', 'img': 'no', 'title': 'no',
@@ -215,9 +222,7 @@ class ChannelListView(View):
             else:
                 return JsonResponse({'channel_info': channel_infos, 'img': imgs, 'title': titles,
                                      'subscribers': subscribers})
-    '''
 
-'''
 class HistoryView(View):
     def post(self,request): # //*[@id="progress"] //*[@id="overlays"]/ytd-thumbnail-overlay-resume-playback-renderer //*[@id="overlays"]/ytd-thumbnail-overlay-resume-playback-renderer
         driver = setting_chrome()
@@ -240,7 +245,7 @@ class HistoryView(View):
         except:
             asdf = 5
 
-'''
+
 
 
 
