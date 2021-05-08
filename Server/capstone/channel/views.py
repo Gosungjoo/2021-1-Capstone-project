@@ -123,7 +123,6 @@ class CommentView(View):
         url = data['comments']
         print(url)
         videoId = url[24:]
-
         results = youtube.commentThreads().list(
             videoId=videoId,
             order='relevance',
@@ -131,8 +130,11 @@ class CommentView(View):
             textFormat='plainText',
             maxResults=50,
         ).execute()
+        print(results['snippet']['totalReplyCount'])
         channelIds = []
-
+        if len(results['items']) < 50:
+            print("I'm here")
+            return JsonResponse({'datas':''})
         for item in results['items']:
             #comment = item['snippet']['topLevelComment']['snippet']['authorChannelUrl']
             channelId = item['snippet']['topLevelComment']['snippet']['authorChannelId']['value']
