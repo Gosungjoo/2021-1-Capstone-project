@@ -51,11 +51,11 @@ class TimelineView(View):
                 comment = item['snippet']['topLevelComment']['snippet']['textDisplay']
                 channel_name = item['snippet']['topLevelComment']['snippet']['authorDisplayName']
                 like_count = item['snippet']['topLevelComment']['snippet']['likeCount']
-                comment_list = [channel_name,comment,like_count]
+                thumnail = item['snippet']['topLevelComment']['snippet']['authorProfileImageUrl']
+                comment_list = [thumnail,channel_name,comment,like_count]
                 # 좋아요 5개 미만 출력 X
                 if like_count >= 5:
                     comments.append(comment_list)
-
 
             if 'nextPageToken' in results:
                 cnt += 1
@@ -64,6 +64,7 @@ class TimelineView(View):
                         videoId=videoId,
                         order='relevance',
                         part='snippet',
+                        pageToken=results['nextPageToken'],
                         textFormat='plainText',
                         maxResults=100,
                     ).execute()
@@ -73,10 +74,10 @@ class TimelineView(View):
                 break
 
         timeline_dict = {}
-
+        best_timeline = []
         # hh:mm:ss 양식 찾기 (timeline 양식 찾기)
         for c_list in comments:
-            comment = c_list[1]
+            comment = c_list[2]
             # 영상길이가 mm:ss 일 때
             if len(length) < 7:
                 # 00:00 확인
@@ -92,13 +93,13 @@ class TimelineView(View):
                         if diff.days > -1:
                             if cmd[0] not in timeline_dict:
                                 timeline_dict[cmd[0]] = []
+                            c_list.append(cmd[0])
+                            c_list.append('just')
                             timeline_dict[cmd[0]].append(c_list)
-                    '''
+
                     else:
-                        if cmd[0] not in timeline_dict:
-                            timeline_dict[cmd[0]] = []
-                        timeline_dict[cmd[0]].append(c_list)
-                    '''
+                        best_timeline.append(c_list)
+
             # 영상 길이가 hh:mm:ss 일 때
             elif len(length) >= 7:
                 # 00:00:00 확인
@@ -114,13 +115,11 @@ class TimelineView(View):
                         if diff.days > -1:
                             if cmd[0] not in timeline_dict:
                                 timeline_dict[cmd[0]] = []
+                            c_list.append(cmd[0])
+                            c_list.append('just')
                             timeline_dict[cmd[0]].append(c_list)
-                    '''
                     else:
-                        if cmd[0] not in timeline_dict:
-                            timeline_dict[cmd[0]] = []
-                        timeline_dict[cmd[0]].append(c_list)
-                    '''
+                        best_timeline.append(c_list)
 
                 else:
                     # 00:00 확인
@@ -131,15 +130,22 @@ class TimelineView(View):
                         cmd = re.compile('[0-9]+:[0-9]+:[0-9]+').findall(comment)
                         if cmd[0] not in timeline_dict:
                             timeline_dict[cmd[0]] = []
+                        c_list.append(cmd[0])
+                        c_list.append('just')
                         timeline_dict[cmd[0]].append(c_list)
 
         for key in timeline_dict.keys():
-            most_like = sorted(timeline_dict[key],key=lambda x:x[-1],reverse=True)
+            most_like = sorted(timeline_dict[key],key=lambda x:x[-3],reverse=True)
             timeline_dict[key] = most_like[0]
 
         timeline_comments = list(timeline_dict.values())
         for x in timeline_comments:
+
             print(x)
             print('-----------------------------------------')
 
+        print('===========================================')
+        best_timeline.sort(key=lambda x:[-1], reverse=True)
+        best_timeline = best_timeline[0]
+        print(best_timeline)
         return JsonResponse({'datas': '', 'skip':length})
