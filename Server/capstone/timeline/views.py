@@ -27,9 +27,25 @@ class TimelineView(View):
         # 영상 길이 확인
         v_length_res = youtube.videos().list(
             id = videoId,
-            part='contentDetails',
+            part='contentDetails, statistics,status',
         ).execute()
         length = v_length_res['items'][0]['contentDetails']['duration']
+
+        # 영유아 영상 댓글 달기 불가 -> 기능 폐지
+        if v_length_res['items'][0]['status']['madeForKids']:
+            print('유야영상')
+            return JsonResponse({'one': 'kids', 'multi': 'kids', 'skip': 'kids'})
+
+        # 댓글 기능 막은경우
+        if 'commentCount' not in v_length_res['items'][0]['statistics'].keys():
+            print('댓글 막음')
+            return JsonResponse({'one': 'no commenet', 'multi': 'no commenet', 'skip': 'no commenet'})
+
+        # 댓글 10개 미만
+        if int(v_length_res['items'][0]['statics']['commentCount']) < 10:
+            print('댓글 10개 미만')
+            return JsonResponse({'one': 'not enough', 'multi': 'not enough', 'skip': 'not enough'})
+
         length = length.replace('PT','').replace('H',':').replace('M',':').replace('S','')
         print(length)
 
@@ -74,7 +90,7 @@ class TimelineView(View):
                 break
 
         timeline_dict = {}
-        best_timeline = []
+        multi_timeline = []
         # hh:mm:ss 양식 찾기 (timeline 양식 찾기)
         for c_list in comments:
             comment = c_list[2]
@@ -93,12 +109,12 @@ class TimelineView(View):
                         if diff.days > -1:
                             if cmd[0] not in timeline_dict:
                                 timeline_dict[cmd[0]] = []
-                            c_list.append(cmd[0])
-                            c_list.append('just')
+                            c_list.append([cmd[0],t_cmd])
+
                             timeline_dict[cmd[0]].append(c_list)
 
                     else:
-                        best_timeline.append(c_list)
+                        multi_timeline.append(c_list)
 
             # 영상 길이가 hh:mm:ss 일 때
             elif len(length) >= 7:
@@ -115,11 +131,11 @@ class TimelineView(View):
                         if diff.days > -1:
                             if cmd[0] not in timeline_dict:
                                 timeline_dict[cmd[0]] = []
-                            c_list.append(cmd[0])
-                            c_list.append('just')
+                            c_list.append([cmd[0],t_cmd])
+
                             timeline_dict[cmd[0]].append(c_list)
                     else:
-                        best_timeline.append(c_list)
+                        multi_timeline.append(c_list)
 
                 else:
                     # 00:00 확인
@@ -130,22 +146,51 @@ class TimelineView(View):
                         cmd = re.compile('[0-9]+:[0-9]+:[0-9]+').findall(comment)
                         if cmd[0] not in timeline_dict:
                             timeline_dict[cmd[0]] = []
-                        c_list.append(cmd[0])
-                        c_list.append('just')
+                        c_list.append([cmd[0],t_cmd])
+
                         timeline_dict[cmd[0]].append(c_list)
 
+        # 타임라인이 안찍힌 영상
+        if len(timeline_dict) < 1:
+            print('안찍힘')
+            return JsonResponse({'one': 'no timeline', 'multi': 'no timeline', 'skip': 'no timeline'})
+
+        # 동일 시간대 타임라인 좋아요 순으로 자르기
         for key in timeline_dict.keys():
-            most_like = sorted(timeline_dict[key],key=lambda x:x[-3],reverse=True)
+            most_like = sorted(timeline_dict[key],key=lambda x:x[-2],reverse=True)
             timeline_dict[key] = most_like[0]
 
-        timeline_comments = list(timeline_dict.values())
-        for x in timeline_comments:
+        # timeline_comments
+        # [0] : 채널 썸네일
+        # [1] : 채널 명
+        # [2] : 댓글내용
+        # [3] : 좋아요
+        # [4] : 타임라인 시간대
 
+        timeline_comments = list(timeline_dict.values())
+
+        # 유사 시간대 타임라인 좋아요 많은 순으로 자르기
+        timeline_comments = sorted(timeline_comments, key=lambda x:(x[-1][-1]))
+        index = 0
+        while index < len(timeline_comments)-1:
+            if (timeline_comments[index+1][4][1]-timeline_comments[index][4][1]).seconds <= 2:
+                if timeline_comments[index][3] >= timeline_comments[index+1][3]:
+                    del timeline_comments[index+1]
+                elif timeline_comments[index][3] < timeline_comments[index+1][3]:
+                    del timeline_comments[index]
+                continue
+            index += 1
+
+        # timeline_comments 5번째 인자 (타임라인 시간) 정리
+        for x in timeline_comments:
+            x[4] = x[4][0]
             print(x)
             print('-----------------------------------------')
 
-        print('===========================================')
-        best_timeline.sort(key=lambda x:[-1], reverse=True)
-        best_timeline = best_timeline[0]
-        print(best_timeline)
-        return JsonResponse({'datas': '', 'skip':length})
+        # 타임라인 여러개 찍힌 댓글 중 좋아요 많은 댓글 1개만 추출
+        if len(multi_timeline) > 0:
+            multi_timeline.sort(key=lambda x:[-1], reverse=True)
+            multi_timeline = multi_timeline[0]
+            print('============================================')
+            print(multi_timeline)
+        return JsonResponse({'one': timeline_comments, 'multi': multi_timeline, 'skip': length})
