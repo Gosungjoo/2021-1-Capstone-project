@@ -87,7 +87,6 @@ def RankingSubscribes(channelIds):
     idRank = {}
     for channelId in channelIds:
         try:
-            start = time.time()
             results = youtube.subscriptions().list(
                 part='snippet',
                 channelId=channelId,
@@ -102,8 +101,6 @@ def RankingSubscribes(channelIds):
                 title = item['snippet']['title']
                 img = item['snippet']['thumbnails']['default']['url']
                 idRank[channelID] = [channelID,title,img,0]
-            end = time.time()
-            print(str(end-start)+' sec')
         except:
             pass
     print("this is REUSULT")
@@ -135,7 +132,7 @@ class CommentView(View):
             order='relevance',
             part='snippet',
             textFormat='plainText',
-            maxResults=50,
+            maxResults=30,
         ).execute()
 
         channelIds = []
