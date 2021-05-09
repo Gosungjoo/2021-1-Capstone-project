@@ -1,0 +1,1 @@
+alert("Open The Tab watching Youtube");

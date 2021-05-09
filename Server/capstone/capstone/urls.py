@@ -18,6 +18,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('ch',include('channel.urls')),
-    path('tl',include('timeline.urls')),
+    path('ch',include('channel.urls'))
+
 ]

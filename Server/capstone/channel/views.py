@@ -122,14 +122,7 @@ class CommentView(View):
         data = json.loads(request.body)
         url = data['comments']
         print(url)
-
-        # 오류제어 : 시청기록 사용 케이스
         videoId = url[24:]
-        if '&t=' in videoId:
-            idx = videoId.index('&t=')
-            videoId = videoId[:idx]
-
-
         results = youtube.commentThreads().list(
             videoId=videoId,
             order='relevance',
@@ -139,7 +132,7 @@ class CommentView(View):
         ).execute()
 
         channelIds = []
-
+        
         for item in results['items']:
             #comment = item['snippet']['topLevelComment']['snippet']['authorChannelUrl']
             channelId = item['snippet']['topLevelComment']['snippet']['authorChannelId']['value']
