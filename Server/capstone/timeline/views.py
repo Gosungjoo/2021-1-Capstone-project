@@ -1,5 +1,4 @@
 from django.shortcuts import render
-<<<<<<< HEAD
 from django.views import View
 from googleapiclient.discovery import build
 from django.http import JsonResponse, HttpResponse
@@ -43,7 +42,7 @@ class TimelineView(View):
             return JsonResponse({'one': 'no commenet', 'multi': 'no commenet', 'skip': 'no commenet'})
 
         # 댓글 10개 미만
-        if int(v_length_res['items'][0]['statics']['commentCount']) < 10:
+        if int(v_length_res['items'][0]['statistics']['commentCount']) < 10:
             print('댓글 10개 미만')
             return JsonResponse({'one': 'not enough', 'multi': 'not enough', 'skip': 'not enough'})
 
@@ -76,7 +75,7 @@ class TimelineView(View):
 
             if 'nextPageToken' in results:
                 cnt += 1
-                if cnt < 5:
+                if cnt < 4:
                     results = youtube.commentThreads().list(
                         videoId=videoId,
                         order='relevance',
@@ -185,17 +184,10 @@ class TimelineView(View):
         # timeline_comments 5번째 인자 (타임라인 시간) 정리
         for x in timeline_comments:
             x[4] = x[4][0]
-            print(x)
-            print('-----------------------------------------')
 
         # 타임라인 여러개 찍힌 댓글 중 좋아요 많은 댓글 1개만 추출
         if len(multi_timeline) > 0:
             multi_timeline.sort(key=lambda x:[-1], reverse=True)
             multi_timeline = multi_timeline[0]
-            print('============================================')
-            print(multi_timeline)
-        return JsonResponse({'one': timeline_comments, 'multi': multi_timeline, 'skip': length})
-=======
 
-# Create your views here.
->>>>>>> cd91addb81cec43b72f9ea98d674d23ab5f78e27
+        return JsonResponse({'one': timeline_comments, 'multi': multi_timeline, 'skip': length})
