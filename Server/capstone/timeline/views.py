@@ -1,5 +1,4 @@
 from django.shortcuts import render
-<<<<<<< HEAD
 from django.views import View
 from googleapiclient.discovery import build
 from django.http import JsonResponse, HttpResponse
@@ -195,7 +194,3 @@ class TimelineView(View):
             print('============================================')
             print(multi_timeline)
         return JsonResponse({'one': timeline_comments, 'multi': multi_timeline, 'skip': length})
-=======
-
-# Create your views here.
->>>>>>> cd91addb81cec43b72f9ea98d674d23ab5f78e27
