@@ -10,7 +10,8 @@
          {
            "matches": ["https://*.youtube.com/watch?v=*"],
            "css": ["styles/contentScript.css"],
-           "js": ["contentScript.js"]
+           "js": ["contentScript.js"],
+           "run_at": "document_end" 
          }
        ],
   "permissions": ["storage", "activeTab", "scripting","activeTab","tabs"],
