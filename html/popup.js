@@ -1,12 +1,6 @@
-var imageList = document.querySelectorAll('img');
-let myImage = imageList[0];
-let myImage2 = imageList[1];
+let myImage = document.querySelector('img');
 let serverdata;
 var scribeindex;
-
-
-
-
 
 
 
@@ -54,47 +48,6 @@ myImage.onclick = function() {
 }
 
 
-myImage2.onclick = function() {
-
- 
-    
-  let mySrc = myImage2.getAttribute('src');
-  if(mySrc == 'images/button(letf).png') {  // gray
-    myImage2.setAttribute ('src','images/button(right).png'); //red
-    let taburl;
-    getCurrentTabUrl(function(youtubeurl,callback) {
-      alert(youtubeurl.substr(8,));    
-      renderURL(youtubeurl);
-      
-      
-      
-      $.ajax({
-        url: 'http://127.0.0.1:8000/tl/comment',
-        method: 'POST',
-        async : true,
-        data : JSON.stringify({ "comments" : youtubeurl.substr(8,),}),
-        dataType :'json',
-
-        error: function (request) {
-          alert("Open The Tab watching Youtube");
-      },
-      success: function (res) {
-        alert(res.datas);
-        serverdata = res.datas;
-        load_subscribe(10);
-      }
-    });
-    
-    
-    });
-
-      
-
-  } else {
-    myImage2.setAttribute ('src', 'images/button(letf).png');
-    
-  }
-}
 
 
 
