@@ -3,12 +3,16 @@ from django.views import View
 from googleapiclient.discovery import build
 from django.http import JsonResponse, HttpResponse
 from datetime import datetime
+
+import pandas as pd
+
 import json
 import re
 # Create your views here.
 
 current_video = ''
 current_token = ''
+
 
 class SeeDaetView(View):
     def change_upload(self, now_time, update_date, upload_date):
@@ -118,6 +122,22 @@ class SeeDaetView(View):
             idx = videoId.index('&t=')
             videoId = videoId[:idx]
 
+        # 영상 길이 확인
+        v_length_res = youtube.videos().list(
+            id=videoId,
+            part='contentDetails, statistics,status',
+        ).execute()
+
+        # 영유아 영상 댓글 달기 불가 -> 기능 폐지
+        if v_length_res['items'][0]['status']['madeForKids']:
+            print('유아영상')
+            return JsonResponse({'data': 'kids'})
+
+        # 댓글 기능 막은경우
+        if 'commentCount' not in v_length_res['items'][0]['statistics'].keys():
+            print('댓글 막음')
+            return JsonResponse({'data': 'no comment'})
+
         # 최초 영상에 대한 요청
         if current_video != videoId:
             print("New")
@@ -128,7 +148,7 @@ class SeeDaetView(View):
                 order='relevance',
                 part='snippet, replies',
                 textFormat='plainText',
-                maxResults=100,
+                maxResults=10,
             ).execute()
             comments = self.get_comments(results, now_time)
         else:
@@ -145,6 +165,8 @@ class SeeDaetView(View):
                 comments = self.get_comments(results, now_time)
             else:
                 return JsonResponse({'data': 'stop it'})
-
-        print(comments)
+        pd_comments = pd.DataFrame(comments)
+        print(pd_comments)
+        #print(comments)
+        pd_comments.to_csv('youtube_crawling.csv', mode='w', encoding='utf-8-sig')
         return JsonResponse({'data':comments})
