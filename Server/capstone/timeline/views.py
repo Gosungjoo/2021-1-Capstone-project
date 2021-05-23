@@ -47,8 +47,12 @@ class TimelineView(View):
             return JsonResponse({'one': 'not enough', 'multi': 'not enough', 'skip': 'not enough'})
 
         length = length.replace('PT','').replace('H',':').replace('M',':').replace('S','')
-        print(length)
 
+        if len(length) == 2:
+            length = '0:'+ length
+        elif len(length) == 1:
+            length = '0:0'+length
+        print(length)
         results = youtube.commentThreads().list(
             videoId=videoId,
             order='relevance',
@@ -184,6 +188,7 @@ class TimelineView(View):
         # timeline_comments 5번째 인자 (타임라인 시간) 정리
         for x in timeline_comments:
             x[4] = x[4][0]
+            print(x)
 
         # 타임라인 여러개 찍힌 댓글 중 좋아요 많은 댓글 1개만 추출
         if len(multi_timeline) > 0:
