@@ -21,5 +21,6 @@ urlpatterns = [
     path('ch',include('channel.urls')),
     path('tl',include('timeline.urls')),
     path('sd', include('seedaet.urls')),
+    path('ml', include('machinelearning.urls')),
 
 ]
