@@ -33,13 +33,13 @@ class TimelineView(View):
 
         # 영유아 영상 댓글 달기 불가 -> 기능 폐지
         if v_length_res['items'][0]['status']['madeForKids']:
-            print('유야영상')
+            print('유아영상')
             return JsonResponse({'one': 'kids', 'multi': 'kids', 'skip': 'kids'})
 
         # 댓글 기능 막은경우
         if 'commentCount' not in v_length_res['items'][0]['statistics'].keys():
             print('댓글 막음')
-            return JsonResponse({'one': 'no commenet', 'multi': 'no commenet', 'skip': 'no commenet'})
+            return JsonResponse({'one': 'no comment', 'multi': 'no comment', 'skip': 'no comment'})
 
         # 댓글 10개 미만
         if int(v_length_res['items'][0]['statistics']['commentCount']) < 10:
