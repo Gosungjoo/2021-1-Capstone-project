@@ -148,7 +148,7 @@ class SeeDaetView(View):
                 order='relevance',
                 part='snippet, replies',
                 textFormat='plainText',
-                maxResults=10,
+                maxResults=100,
             ).execute()
             comments = self.get_comments(results, now_time)
         else:
