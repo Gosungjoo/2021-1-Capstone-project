@@ -136,6 +136,9 @@ class CommentView(View):
         if 'commentCount' not in v_length_res['items'][0]['statistics'].keys():
             print('댓글 막음')
             return JsonResponse({'data': 'no comment'})
+        # 댓글 10개 미만
+        if int(v_length_res['items'][0]['statistics']['commentCount']) < 30:
+            return JsonResponse({'one': 'not enough', 'multi': 'not enough', 'skip': 'not enough'})
 
         results = youtube.commentThreads().list(
             videoId=videoId,
