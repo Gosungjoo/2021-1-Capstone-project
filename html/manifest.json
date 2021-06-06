@@ -9,8 +9,8 @@
   "content_scripts": [
          {
            "matches": ["https://*.youtube.com/watch?v=*"],
-           "css": ["styles/contentScript.css"],
-           "js": ["scripts/jquery.js","scripts/jquery-ui.js","contentScript.js"],
+           "css": ["styles/contentScript.css","styles/jquery.mCustomScrollbar.css"],
+           "js": ["scripts/jquery.js","scripts/jquery-ui.js","scripts/jquery.mousewheel.min.js","scripts/jquery.mCustomScrollbar.js","contentScript.js"],
            "run_at": "document_end" 
          }
        ],

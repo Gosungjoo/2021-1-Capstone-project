@@ -1,64 +1,20 @@
-let timelinedata;
-let commentsdata;
-var index;
-$(function() {
-  var url = document.location.href;
-  //alert(url);
-  var iframe = $("<iframe>", {
-    "id": "frame",
-    "src": url,
-    "width": "100%",
-    "height": "500px"
-  });
-  var body = $(document.getElementById("secondary")).prepend(iframe);
-  body.find("#frame").contents()
-  .find("body").html(a);
+let timeline_data;
+let comments_data;
+let comments_start;
+let comments_end;
+let comments_length;
 
 
-  
-  $(iframe).on('load',function() {
-    
-
-    
-        const idocument = $('#frame').get(0).contentDocument;
+var ontimeline = 1;
+var oncomment = 1;
+var ordertype = "relevance"; //  time
 
 
+// resizable용 css파일
+$('head').append('<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">');
 
-        removeFrame("masthead-container",idocument)
-        removeFrame("player",idocument)
-        removeFrame("panels",idocument);
-        removeFrame("chat-template",idocument);
-        removeFrame("playlist",idocument);
-        removeFrame("info",idocument);
-        removeFrame("meta",idocument);
-        removeFrame("related",idocument);
-        
-
-        
-
-      
-      
-
-
-  } );
-
-  function removeFrame(name, idocument){
-    let timerId = setTimeout(function tick() {
-      try{
-        const player  = idocument.getElementById(name);
-        player.remove();
-        clearTimeout(timerId);
-      }
-      catch(error){
-      }
-      timerId = setTimeout(tick, 100); // (*)
-    }, 500);
-
-  }
-
-
-});
-function getComments(){
+// request 부분
+function requestComments(){
   //image객체가 생성되어 속성들을 추가할수 있음
      // image.src = chrome.extension.getURL(images/button(letf).png);
       //alert(document.getElementsByClassName("ytp-time-current").value);
@@ -78,27 +34,41 @@ function getComments(){
         },
         success: function (res) {
           alert(res.data);
-          commentsdata = res.data;
+          comments_data = res.data;
           index = 0;
-          load_comments(10);
+          
 
-          if(typeof(serverdata) == 'string'){
-              if(serverdata == 'kids'){
+          if(typeof(comments_data) == 'string'){
+              if(comments_data == 'kids'){
                   alert("유아 영상은 댓글이 제한되어 있습니다.");
               }
-              if(serverdata == 'no commenet'){
+              if(comments_data == 'no commenet'){
                   alert("해당 영상은 댓글이 제한되어 있습니다.");
-              }if(serverdata == 'not enough'){
+              }if(comments_data == 'not enough'){
                   alert("해당 영상은 댓글이 부족합니다.");
-              }if(serverdata == 'no timeline'){
+              }if(comments_data == 'no timeline'){
                   alert("해당 영상은 타임라인을 언급한 댓글이 존재하지 않습니다.");
               }
               
   
           }
           else{
-  
-  
+            comments_length = comments_data.length;
+            comments_start = 0;
+            comments_end = 0;
+            if(comments_length > 11){
+            comments_end = 10;
+            load_comments();
+              
+
+            }
+            else{
+              comments_end = comments_length-1;
+              load_comments();
+
+
+            }
+
           }
           
           //let timerId = setInterval(() => compare(), 200);
@@ -107,10 +77,10 @@ function getComments(){
         }
       });
       
-  }
+}
   
 
-function access(){
+function requestTimelines(){
 //image객체가 생성되어 속성들을 추가할수 있음
    // image.src = chrome.extension.getURL(images/button(letf).png);
     //alert(document.getElementsByClassName("ytp-time-current").value);
@@ -130,16 +100,16 @@ function access(){
       },
       success: function (res) {
         alert(res.one);
-        serverdata = res.one;
-        if(typeof(serverdata) == 'string'){
-            if(serverdata == 'kids'){
+        timeline_data = res.one;
+        if(typeof(timeline_data) == 'string'){
+            if(timeline_data == 'kids'){
                 alert("유아 영상은 댓글이 제한되어 있습니다.");
             }
-            if(serverdata == 'no comment'){
+            if(timeline_data == 'no comment'){
                 alert("해당 영상은 댓글이 제한되어 있습니다.");
-            }if(serverdata == 'not enough'){
+            }if(timeline_data == 'not enough'){
                 alert("해당 영상은 댓글이 부족합니다.");
-            }if(serverdata == 'no timeline'){
+            }if(timeline_data == 'no timeline'){
                 alert("해당 영상은 타임라인을 언급한 댓글이 존재하지 않습니다.");
             }
         }
@@ -147,7 +117,7 @@ function access(){
 
 
         }
-        let timerId = setInterval(() => compare(), 200);
+        let timerId = setInterval(() => time_compare(), 200);
 
         
       }
@@ -157,40 +127,64 @@ function access(){
 
 
 
+function CurrentTime(){  // 현재 동영상의 재생시간
+
+  var htmlVideoPlayer= document.getElementsByTagName('video')[0];
+  return htmlVideoPlayer.currentTime;
+
+}
 
 
-function compare(){
-    var items = document.getElementsByClassName("ytp-time-current");
-    var time = items.item(0).innerHTML;
-    var k = serverdata.length;
+
+
+function time_compare(){ // 해당시간에 존재하는 타임라인 찾아서 5초 띄우고 제거
+
+  if(ontimeline == 1){
+  var nowtime = CurrentTime()
+  var k = timeline_data.length;
     for(var i = 0 ; i < k; i++ ){
-        var ser = serverdata[i]
-        if(ser[4] == items.item(0).innerHTML){
-            line_distibute(ser);
+        var timeSum = 0;
+        var ser = timeline_data[i]
+        var timeArray = ser[4].split(':');  // 00:00:00 or 00:00 or 0:00;
+        if(timeArray.length == 3 ){
+          timeSum += parseInt(timeArray[0])*3600;
+          timeSum += parseInt(timeArray[1])*60;
+          timeSum += parseInt(timeArray[2]);
+
+
+
+
+        }
+        else if(timeArray.length == 2){
+
+          timeSum += parseInt(timeArray[0])*60;
+          timeSum += parseInt(timeArray[1]);
+
+
+
+        }
+        if(timeSum == nowtime){
+          timeLine_distribute(ser);
+
+            ontimeline = false;
+            setTimeout(function(){
+            clearCell();
+            ontimeline = true;
+            }, 5000);
             break;
         }
    
     }
+  }
 }
 
 
 
-function line_distibute(data){
+function timeLine_distribute(data){
   //String[]  = data.split(",");
       setTimeCell(data[0],data[1],data[2],data[3],data[4]);
   
   }
-
-//<iframe width="560" height="315" src="http://www.youtube.com/embed/jNAK7QL5JjI"  frameborder="0">이 브라우저는 iframe을 지원하지 않습니다</iframe></p>
-function timeCell(){
-    var zCell = '<div id = "timeLine" style ="position:absolute; left:50pt ;top:150;background-color: rgba(200, 200, 200, 0.4);"> <div id = "timeLineheader" style =" width:150pt;height=50pt; " >   <div id = "timeimage" style="  float: left; width:50pt;height=50pt;"> img </div><div id = rightwindows> <div id = "timename"> name </div>  <div id = "timecomments"> comments </div><div id = "timeLike"> Like </div> </div> </div></div>'
-    $(document.getElementById("columns")).append(zCell);
-}
-
-function commentCell(){
-  var zCell = '<div id = "commentsScroll" , style="width:100%; height:200px;margin-top:20px;backgroud-color:gray;opacity:0.95;overflow:auto;"><div id = "warp" ><table id="tg"><thead><tr><td class="tg-baqh">   </td><td class="tg-baqh">   </td></tr></thead></table></div></div>';
-  $(document.getElementsByClassName("style-scope ytd-watch-flexy")[11]).append(zCell);
-}
 
 
 function setTimeCell(imgUrl,name,comment,like,time){
@@ -200,6 +194,15 @@ function setTimeCell(imgUrl,name,comment,like,time){
     document.getElementById("timeLike").innerHTML = "<a  target = blank> &nbsp&nbsp&nbsp<b> like is = " +like+ "</b> ";
 
 }
+
+
+
+
+function timeCell(){
+    var zCell = '<div id = "timeLine" style ="position:absolute; left:50pt ;top:150;background-color: rgba(200, 200, 200, 0.4);opacity:1.0"> <div id = "timeLineheader" style =" width:150pt;height=50pt; " >   <div id = "timeimage" style="  float: left; width:50pt;height=50pt;"> img </div><div id = rightwindows> <div id = "timename"> name </div>  <div id = "timecomments"> comments </div><div id = "timeLike"> Like </div> </div> </div></div>'
+    $(document.getElementById("columns")).append(zCell);
+}
+
 
 
 function clearCell(){
@@ -212,116 +215,190 @@ function clearCell(){
 
 
 
+function commentCell(){
+  var zCell = '<div id = "commentsScroll" , style="width:100%; height:200px;margin-top:20px;background-color: rgba(200, 200, 200, 0.4);opacity:1.0;"><div id = "warp" style ="width:100%; height:100%; overflow:auto; overflow-x:hidden;" > 왜? <table id="tg"><thead><tr><td class="tg-baqh">   </td><td class="tg-baqh">   </td></tr></thead></table></div></div>';
+  $(document.getElementsByClassName("style-scope ytd-watch-flexy")[11]).append(zCell);
+}
 
-function line_distibute_com(data){
+
+
+
+
+
+function comment_distribute(data){
   //String[]  = data.split(",");
       addRow(data[2],data[0],data[1],data[5],data[3],data[4],data[6]);
   
   }
 
-document.addEventListener('DOMContentLoaded', function() {
-
-  var link = document.getElementById('commentsScroll');
-  alert("sibal");
- link.addEventListener("scroll", function(){
-   var scroll_top = $(this).scrollTop(); //스크롤바의 상단위치
-   var scroll_H = $(this).height(); //스크롤바를 갖는 div의 높이
-   var contentH = $(document.getElementById('tg')).height(); //문서 전체 내용을 갖는 div의 높이
-     $(".top").text(scroll_top);
-      $(".H").text(scroll_H);
-      $(".CH").text(contentH);
-   if(scroll_top + scroll_H +1 >= contentH) { // 스크롤바가 아래 쪽에 위치할 때
-       if(scribeindex != '-1'){
-         load_comments(10);
-       }
-       
-   }
-});
-});
-
-function load_comments(c){
-
-  for(var i = 0 ; i < c ; i++ ){
-  if(commentsdata.length == index){
-    index = -1;
-    alert("no more exist data!");
+  
+function load_comments(){
+  for(var i = comments_start ; i < comments_end ; i++ ){
+    comment_distribute(comments_data[i]);
   }
-  else{
-  line_distibute_com(commentsdata[index]);
-  index++;
-}
-
-}
+  return end;
 }
 
 
-
-
-function addRow(LinkSource,imgUrl,name,upload,comment,like,replie) {
-  // table element 찾기
-  const Link = LinkSource;
-  const table = document.getElementById('tg');
+  function addRow(LinkSource,imgUrl,name,upload,comment,like,replie) {
+    // table element 찾기
+    const Link = LinkSource;
+    const table = document.getElementById('tg');
+    
+    // 새 행(Row) 추가 (테이블 중간에)
+    const newRow1 = table.insertRow(-1);
+    
+    // 새 행(Row)에 Cell 추가
+    const newCell1 = newRow1.insertCell(0); // img
+    const newCell2 = newRow1.insertCell(1); // name
+    const newCell3 = newRow1.insertCell(2); // date
+    const tempCell0 = newRow1.insertCell(3);
   
-  // 새 행(Row) 추가 (테이블 중간에)
-  const newRow1 = table.insertRow(-1);
+    const newRow2 = table.insertRow(-1);
+    const newCell4 = newRow2.insertCell(0); // comment
+    const newCell5 = newRow2.insertCell(1);
+    const newCell6 = newRow2.insertCell(2); // replie
+   
+    //const newRow3 = table.insertRow(-1); // like 
+    
+    // Cell에 텍스트 추가
+    newCell4.innerHTML = "<a href=" +Link+  "target = blank><img src=" +imgUrl+ " width='50'; height='50' >";
+    newCell2.innerHTML = "<a href=" +Link +  "target = blank> &nbsp&nbsp&nbsp<b>" +name+ "</b></a>" + "&nbsp&nbsp&nbsp"+ upload;
+   // newCell3.innerHTML = ;
+    newCell5.innerHTML = comment;
+    newCell6.innerHTML = like;
+    document.querySelector('img').style.mborderRadius="50%";
+    
+    //newCell6.innerHTML = "replie";
+    
+    //newCell3.innerHTML = rank;
+  }
   
-  // 새 행(Row)에 Cell 추가
-  const newCell1 = newRow1.insertCell(0); // img
-  const newCell2 = newRow1.insertCell(1); // name
-  const newCell3 = newRow1.insertCell(2); // date
-  const tempCell0 = newRow1.insertCell(3);
-
-  const newRow2 = table.insertRow(-1);
-  const newCell4 = newRow2.insertCell(0); // comment
-  const newCell5 = newRow2.insertCell(1);
-  const newCell6 = newRow2.insertCell(2); // replie
- 
-  //const newRow3 = table.insertRow(-1); // like 
-  
-  // Cell에 텍스트 추가
-  newCell4.innerHTML = "<a href=" +Link+  "target = blank><img src=" +imgUrl+ " width='50'; height='50' >";
-  newCell2.innerHTML = "<a href=" +Link +  "target = blank> &nbsp&nbsp&nbsp<b>" +name+ "</b></a>" + "&nbsp&nbsp&nbsp"+ upload;
- // newCell3.innerHTML = ;
-  newCell5.innerHTML = comment;
-  newCell6.innerHTML = like;
-  document.querySelector('img').style.mborderRadius="50%";
-  
-  //newCell6.innerHTML = "replie";
-  
-  //newCell3.innerHTML = rank;
-}
-
-var bar = '<input type="range" value="0" min="0" max="100"></input>';
 
 
+
+
+
+
+
+
+var bar = '<input type="range" value="0" min="0" max="100" id = "range"></input>';
+var bar2 = '<span id="value"></span>';
+var bar3 = '<span id="outputVar"></span>';
 $(document.getElementsByClassName("ytp-left-controls")).append(bar);
+$(document.getElementsByClassName("ytp-left-controls")).append(bar2);
+$(document.getElementsByClassName("ytp-left-controls")).append(bar3);
+
+var slider = document.getElementById("range");
+var output = document.getElementById("value");
+var outputVarNo = document.getElementById("outputVar");
+function update(){
+   output.innerHTML = slider.value;
+   $("#commentsScroll").css('opacity', slider.value/100);
+   $("#timeLine").css('opacity', slider.value/100);
+  };
+slider.addEventListener('input', update);
+
+
+
+
+
+
+
+
 
 timeCell();
 commentCell();
-access();
-getComments();
+requestTimelines();
+requestComments();
 clearCell();
-//LoadCommentCell();
-$(document.getElementById("timeLine")).draggable();
-$(document.getElementById("commentsScroll")).draggable();
+drag_resize();
+update();
 
-$('timeLine').resizable({
-  //함께 커질영역 
-  alsoResize:'timeLineheader',
-  //커질때 애니메이션 발생 
-  animate :  true,
-  animateDuration: 300,
-  animateEasing:"swing",
-  //비율유지
-  aspectRatio: true,
-  //마우스 hover 아닐때 핸들러 숨기기
-  autoHide: true,
-  //minHeight, maxHeight, minWidth, maxWidth 최소,최대 크기지정 
-});
 
+function comments_setting(){
+  if(comments_end != comments_length-1){}
+
+  if(comments_end + 10 <comments_length){
+    comments_end += 10;
+  }
+  else{
+    comments_end = comments_length-1;
+  }
+
+
+}
+
+
+
+
+function drag_resize(){
+  $("#commentsScroll").mCustomScrollbar({
+    mouseWheel:{ scrollAmount: 300 },
+    callbacks:{
+      onTotalScroll:function(){
+        alert("Scrolled to end of content."); // 여기에 추가하자공
+        comments_setting();
+        load_comments();
+      }
+  }
+  });
+  $(document.getElementById("timeLine")).draggable({}
+    
+  );
+  $(document.getElementById("commentsScroll")).draggable();
+  $( "#commentsScroll" ).resizable({
+    alsoResize:'timeLineheader',
+    //커질때 애니메이션 발생 
+    animate :  true,
+    animateDuration: 100,
+    animateEasing:"swing",
+    //비율유지
+    //마우스 hover 아닐때 핸들러 숨기기
+    autoHide: true,
+    //minHeight, maxHeight, minWidth, maxWidth 최소,최대 크기지정 
+  });
+  $('#timeLine').resizable({
+    //함께 커질영역 
+    alsoResize:'timeLineheader',
+  
+    animate :  true,
+    animateDuration: 100,
+    animateEasing:"swing",
+    //비율유지
+    //마우스 hover 아닐때 핸들러 숨기기
+    autoHide: true,
+    //minHeight, maxHeight, minWidth, maxWidth 최소,최대 크기지정 
+  });
+  hideXscroll();
+}
+
+
+
+
+function hideXscroll(){
+$("#warp").css('overflow-x', "hidden");
+}
+
+
+function hideTimeline(){
+  $('#timeline').hide();
+}
+
+function hideComments(){
+  $('#commentsScroll').hide();
+}
+
+
+function showTimeline(){
+  $('#timeline').show();
+}
+
+function showComments(){
+  $('#commentsScroll').show();
+}
 
 
 //$(document.getElementsById("content-text"));
-
 
 
