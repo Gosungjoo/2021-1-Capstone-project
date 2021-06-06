@@ -117,7 +117,7 @@ rcmd.click ( function() {
       
       let taburl;
       getCurrentTabUrl(function(youtubeurl,callback) {
-        alert(youtubeurl.substr(8,));    
+        //alert(youtubeurl.substr(8,));    
         renderURL(youtubeurl);
         
         
@@ -163,7 +163,7 @@ function load_subscribe(c){
     for(var i = 0 ; i < c ; i++ ){
     if(serverdata.length == scribeindex){
       scribeindex = -1;
-      alert("no more exist data!");
+      //alert("no more exist data!");
     }
     else{
     line_distibute(serverdata[scribeindex]);
@@ -213,7 +213,7 @@ function renderURL(statusText) {
 
   /*document.getElementById('urls').textContent = statusText;
 */
-  alert(statusText);
+  //alert(statusText);
 
 
 }

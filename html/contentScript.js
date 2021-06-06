@@ -20,6 +20,7 @@ var ordertype = "time"; //  time
 chrome.runtime.onMessage.addListener(function (response, sendResponse) {
   if(response.spam == 1){
     spam = 1;
+    ordertype = "time";
     update_com();
     //alert("스팸1");
     updateSetting();
@@ -27,6 +28,7 @@ chrome.runtime.onMessage.addListener(function (response, sendResponse) {
   else if(response.spam == 0){
     spam = 0;
     update_com();
+    ordertype = "relevance";
     updateSetting();
     //alert("스팸0");
   }
@@ -294,7 +296,7 @@ function clearCell(){
 
 function commentCell(){
 
-  var zCell = '<div id = "commentsScroll" , style="position:absolute; left:50pt ;top:150; width:30%; height:200px;background-color: rgba(255, 255, 255, 1.0);opacity:1.0;"><div id = "warp" style ="width:100%; height:80%; overflow:auto; overflow-x:hidden;" >  <table id="tg"><thead><tr><td class="tg-baqh">   </td><td class="tg-baqh">   </td></tr></thead></table></div></div>';
+  var zCell = '<div id = "commentsScroll" , style="position:absolute; z-index : 9999 ; left:50pt ;top:150; width:30%; height:200px;background-color: rgba(255, 255, 255, 1.0);opacity:1.0;"><div id = "warp" style ="width:100%; height:100%; overflow:auto; overflow-x:hidden;" >  <table id="tg"><thead><tr><td class="tg-baqh">   </td><td class="tg-baqh">   </td></tr></thead></table></div></div>';
   $(document.getElementById("columns")).append(zCell);
   //$(document.getElementsByClassName("style-scope ytd-watch-flexy")[11]).append(zCell);
 }
@@ -493,13 +495,6 @@ function drag_resize(){
         load_comments();
         
 
-      },
-      whileScrolling:function(){
-        $("#warp").css("height","80%");
-        $('#warp').mCustomScrollbar("scrollTo","bottom",{
-          scrollInertia:1000
-      });    
-    
       }
 
   }
