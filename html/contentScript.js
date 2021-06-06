@@ -3,7 +3,10 @@ let comments_data;
 let comments_start;
 let comments_end;
 let comments_length;
-
+let com_x = 50;
+let com_y = 150;
+let com_w= 600;
+let com_h= 200;
 
 var ontimeline = 1;
 var oncomment = 1;
@@ -17,24 +20,25 @@ var ordertype = "time"; //  time
 chrome.runtime.onMessage.addListener(function (response, sendResponse) {
   if(response.spam == 1){
     spam = 1;
+    update_com();
     //alert("스팸1");
     updateSetting();
   }
   else if(response.spam == 0){
     spam = 0;
-    
+    update_com();
     updateSetting();
     //alert("스팸0");
   }
   else if(response.korean == 1){
     korean = 1;
-    
+    update_com();
     updateSetting();
     //alert("1");
   }
   else if(response.korean == 0){
     korean = 0;
-    
+    update_com();
     updateSetting();
     //alert("0");
   }
@@ -176,6 +180,26 @@ function requestTimelines(){
       }
     });
     
+}
+
+
+
+function update_com(){
+  
+  com_x = $('#commentsScroll').css("left");
+  com_y = $('#commentsScroll').css("top");
+  com_h = $('#commentsScroll').css("height");
+  com_w = $('#commentsScroll').css("width");
+  $('#commentsScroll').remove();
+  commentCell();
+  requestComments();
+  drag_resize();
+  update(); 
+  $('#commentsScroll').css("left",com_x);
+  $('#commentsScroll').css("top",com_y);
+  $('#commentsScroll').css("height",com_h );
+  $('#commentsScroll').css("width",com_w );
+
 }
 
 
@@ -463,7 +487,7 @@ function drag_resize(){
     mouseWheel:{ scrollAmount: 500 },
     callbacks:{
       onTotalScroll:function(){
-        alert("loading");
+        //alert("loading");
         // alert("Scrolled to end of content."); // 여기에 추가하자공
         comments_setting();
         load_comments();
