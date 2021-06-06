@@ -217,12 +217,10 @@ class SeeDaetView(View):
 
         # 영유아 영상 댓글 달기 불가 -> 기능 폐지
         if v_length_res['items'][0]['status']['madeForKids']:
-            print('유아영상')
             return JsonResponse({'data': 'kids'})
 
         # 댓글 기능 막은경우
         if 'commentCount' not in v_length_res['items'][0]['statistics'].keys():
-            print('댓글 막음')
             return JsonResponse({'data': 'no comment'})
 
         # 최초 영상에 대한 요청
@@ -243,7 +241,6 @@ class SeeDaetView(View):
         # 동일 영상에 대한 댓글 추가 100개 요청(korean 및 spam 타입 동일)
         elif current_video == videoId and current_type == order_type and current_token != 'no' and current_korean == \
                 korean and current_spam == spam:
-            print("이전 필터 동일 + 이어서")
             results = youtube.commentThreads().list(
                 videoId=videoId,
                 order=order_type,
@@ -255,7 +252,6 @@ class SeeDaetView(View):
             comments = self.get_comments(results, now_time)
         # 인기 <-> 최신 필터 변경
         elif current_video == videoId and current_type != order_type:
-            print("인기 최신 변경")
             current_type = order_type
             current_korean = 0
             current_spam = 0
@@ -269,7 +265,6 @@ class SeeDaetView(View):
             comments = self.get_comments(results, now_time)
         # 한국인 및 스팸 필터 변경 (인기 / 최신 상태는 동일)
         elif current_video == videoId and (current_korean != korean or current_spam != spam):
-            print("스팸 한국인 변경")
             current_korean = korean
             current_spam = spam
             results = youtube.commentThreads().list(
@@ -287,18 +282,14 @@ class SeeDaetView(View):
         # filter 종류
         # 필터 적용 x
         if korean == 0 and spam == 0:
-            print("무 필터")
             return JsonResponse({'data': comments})
         # 한국인 필터 적용
         elif korean == 1 and spam == 0:
-            print("한국인 필터")
             return JsonResponse({'data': korean_discrimination(comments)})
         # 스팸 필터 적용
         elif korean == 0 and spam == 1:
-            print("스팸 필터")
             return JsonResponse({'data': spam_discrimination(comments)})
         # 한국인 + 스팸 필터 적용 (선 한국인 후 스팸)
         elif korean == 1 and spam == 1:
-            print("둘 다")
             return JsonResponse({'data': spam_discrimination(korean_discrimination(comments))})
         return JsonResponse({'data': 'error'})
