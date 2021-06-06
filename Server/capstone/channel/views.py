@@ -105,7 +105,7 @@ def RankingSubscribes(channelIds):
     final = list(idRank.values())
 
     final.sort(key=lambda data:data[-1], reverse=True)
-
+    final = final[:10]
     return final
 
 class CommentView(View):
