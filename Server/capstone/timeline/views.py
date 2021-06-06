@@ -15,9 +15,6 @@ class TimelineView(View):
         youtube = build('youtube', 'v3', developerKey=api_key)
         data = json.loads(request.body)
         url = data['comments']
-        print(url)
-        videoId = url[24:]
-
         # 오류제어 : 시청기록 사용 케이스
         videoId = url[24:]
         if '&t=' in videoId:
@@ -33,17 +30,14 @@ class TimelineView(View):
 
         # 영유아 영상 댓글 달기 불가 -> 기능 폐지
         if v_length_res['items'][0]['status']['madeForKids']:
-            print('유아영상')
             return JsonResponse({'one': 'kids', 'multi': 'kids', 'skip': 'kids'})
 
         # 댓글 기능 막은경우
         if 'commentCount' not in v_length_res['items'][0]['statistics'].keys():
-            print('댓글 막음')
             return JsonResponse({'one': 'no comment', 'multi': 'no comment', 'skip': 'no comment'})
 
         # 댓글 10개 미만
         if int(v_length_res['items'][0]['statistics']['commentCount']) < 10:
-            print('댓글 10개 미만')
             return JsonResponse({'one': 'not enough', 'multi': 'not enough', 'skip': 'not enough'})
 
         length = length.replace('PT','').replace('H',':').replace('M',':').replace('S','')
@@ -52,7 +46,6 @@ class TimelineView(View):
             length = '0:'+ length
         elif len(length) == 1:
             length = '0:0'+length
-        print(length)
         results = youtube.commentThreads().list(
             videoId=videoId,
             order='relevance',
@@ -156,7 +149,6 @@ class TimelineView(View):
 
         # 타임라인이 안찍힌 영상
         if len(timeline_dict) < 1:
-            print('안찍힘')
             return JsonResponse({'one': 'no timeline', 'multi': 'no timeline', 'skip': 'no timeline'})
 
         # 동일 시간대 타임라인 좋아요 순으로 자르기
@@ -188,7 +180,6 @@ class TimelineView(View):
         # timeline_comments 5번째 인자 (타임라인 시간) 정리
         for x in timeline_comments:
             x[4] = x[4][0]
-            print(x)
 
         # 타임라인 여러개 찍힌 댓글 중 좋아요 많은 댓글 1개만 추출
         if len(multi_timeline) > 0:

@@ -2,16 +2,124 @@ from django.shortcuts import render
 from django.views import View
 from googleapiclient.discovery import build
 from django.http import JsonResponse, HttpResponse
+from tensorflow.keras.preprocessing.text import Tokenizer
 from datetime import datetime
-
 import pandas as pd
-
+import numpy as np
 import json
 import re
 # Create your views here.
 
 current_video = ''
 current_token = ''
+current_type = ''
+current_korean = 0
+current_spam = 0
+
+
+def labeling(data, ml_model, kind_of):
+    # 컬럼 분리
+    X_data = data[3]
+    tokenizer = Tokenizer()
+    tokenizer.fit_on_texts(X_data)
+    sequences = tokenizer.texts_to_sequences(X_data)  # 토크나이징 >> i love lemon => 1 , 2 , 3
+    X_data = sequences
+
+    def vectorize_sequences(sequences, dimension):
+        # 크기가 (len(sequences), dimension)이고 모든 원소가  0인 행렬을 생성
+        results = np.zeros((len(sequences), dimension))
+        for i, sequence in enumerate(sequences):
+            results[i, sequence] = 1.  # results[i]에서 특정 인덱스의 위치를 1로 지정
+        return results
+    if kind_of == 'kr':
+        X_data_vec = vectorize_sequences(X_data,10000)  # 데이터를 벡터로 변환 (korean)
+    else:
+        X_data_vec = vectorize_sequences(X_data, 20000)  # 데이터를 벡터로 변환 (spam)
+
+    from tensorflow.keras.models import load_model  # 모델 소환
+
+    model = load_model(ml_model)
+    prediction = model.predict(X_data_vec)  # 모델 예측값
+    prediction = np.round(prediction)  # 반올림
+
+    data[kind_of] = prediction.tolist()  # 합치기
+    data = data.values.tolist()
+
+    return data
+
+
+def korean_discrimination(data):
+    sdata = pd.DataFrame(data)
+    ml_data = pd.DataFrame()
+    re_idx = []
+    sdata['kr'] = np.nan
+    for i in range(len(sdata)):
+        if ([] != re.findall(u'[\u3130-\u318F\uAC00-\uD7A3]+', str(sdata.loc[i][1]))) or \
+                ([] != re.findall(u'[\u3130-\u318F\uAC00-\uD7A3]+', str(sdata.loc[i][3]))):
+            sdata.loc[i, 'kr'] = list([1.0])
+        else:
+            ml_data = ml_data.append(sdata.loc[i], ignore_index=True)
+            re_idx.append(i)
+
+    sdata = sdata.values.tolist()
+    # 전처리에서 모두 한국인으로 판별된 경우
+    if len(ml_data) == 0:
+        for i in range(len(sdata)):
+            sdata[i] = sdata[i][:-1]
+        return sdata
+
+    # 전처리에서 한국인 판별이 필요한 댓글이 존재하는 경우
+    end_ml = labeling(ml_data, 'nlp_model.h5', 'kr')
+    cnt = 0
+    for i in re_idx:
+        del sdata[i]
+        sdata.insert(i, end_ml[cnt])
+        cnt += 1
+    send_data = []
+    for i in range(len(sdata)):
+
+        if sdata[i][-1] != [0.0]:
+            send_data.append(sdata[i][:-1])
+
+    return send_data
+
+
+def spam_discrimination(data, multi=0):
+    sdata = pd.DataFrame(data)
+    ml_data = pd.DataFrame()
+    re_idx = []
+    sdata['spam'] = np.nan
+
+    for i in range(len(sdata)):
+        if [] != re.findall(u'[\u3130-\u318F\uAC00-\uD7A3]+', str(sdata.loc[i][1])):
+            sdata.loc[i, 'spam'] = list([1.0])
+        else:
+            ml_data = ml_data.append(sdata.loc[i], ignore_index=True)
+            re_idx.append(i)
+
+    sdata = sdata.values.tolist()
+
+    # 전처리에서 모두 비 스팸 으로 판별된 경우
+    if len(ml_data) == 0:
+        for i in range(len(sdata)):
+            sdata[i] = sdata[i][:-1]
+        return sdata
+
+    # 전처리에서 스팸 판별이 필요한 댓글이 존재하는 경우
+    end_ml = labeling(ml_data, 'spam_model.h5', 'spam')
+
+    cnt = 0
+    for i in re_idx:
+        del sdata[i]
+        sdata.insert(i, end_ml[cnt])
+        cnt += 1
+
+    send_data = []
+    for i in range(len(sdata)):
+        if sdata[i][-1] != [0.0]:
+            send_data.append(sdata[i][:-1])
+
+    return send_data
 
 
 class SeeDaetView(View):
@@ -68,34 +176,10 @@ class SeeDaetView(View):
 
             when_upload = self.change_upload(now_time, upload_date, update_date)
 
-            replies = []
-            # 총 reply 수 (덧글) 수 확인, 만약 덧글이 존재하면 데이터 가져오고 없으면 pass
-            total_replies = item['snippet']['totalReplyCount']
-            if total_replies > 0:
-                rep_res = item['replies']['comments']
-                for rep_item in rep_res:
-                    rep_comment = rep_item['snippet']['textDisplay']
-                    rep_channel_name = rep_item['snippet']['authorDisplayName']
-                    rep_channel_url = rep_item['snippet']['authorChannelUrl']
-                    rep_like_count = rep_item['snippet']['likeCount']
-                    rep_thumbnail = rep_item['snippet']['authorProfileImageUrl']
-
-                    # 언제 올렸는지 계산 및 수정 여부 파악
-                    rep_upload_date = item['snippet']['topLevelComment']['snippet']['publishedAt']
-                    rep_update_date = item['snippet']['topLevelComment']['snippet']['updatedAt']
-
-                    rep_upload_date = datetime.strptime(rep_upload_date.replace('T', ' ').replace('Z', ''),
-                                                        '%Y-%m-%d %H:%M:%S')
-                    rep_update_date = datetime.strptime(rep_update_date.replace('T', ' ').replace('Z', ''),
-                                                        '%Y-%m-%d %H:%M:%S')
-
-                    rep_when_upload = self.change_upload(now_time, rep_upload_date, rep_update_date)
-
-                    replies.append([rep_comment, rep_channel_name, rep_channel_url, rep_like_count, rep_thumbnail,
-                                    rep_when_upload])
-
-            comment_list = [thumbnail, channel_name, channel_url, comment, like_count, when_upload, replies]
+            # 전송을 위해 list 에 저장
+            comment_list = [thumbnail, channel_name, channel_url, comment, like_count, when_upload]
             comments.append(comment_list)
+
         # 다음 요청에 대비해 next page token 저장
         if 'nextPageToken' in results:
             current_token = results['nextPageToken']
@@ -105,16 +189,19 @@ class SeeDaetView(View):
         return comments
 
     def post(self, request):
-        global current_video, current_token
+        global current_video, current_token, current_type, current_korean, current_spam
         api_key = 'AIzaSyC4poxuFWcR4mChE66JBgKDjbGUFjmRas4'
         youtube = build('youtube', 'v3', developerKey=api_key)
         data = json.loads(request.body)
         url = data['comments']
+        order_type = data['type']
+
+        # 한국인 필터 기능 사용 여부 파악
+        korean = int(data['korean'])
+        # 스팸 필터 기능 사용 여부 파악
+        spam = int(data['spam'])
 
         now_time = datetime.now()
-
-        print(url)
-        videoId = url[24:]
 
         # 오류제어 : 시청기록 사용 케이스
         videoId = url[24:]
@@ -130,43 +217,79 @@ class SeeDaetView(View):
 
         # 영유아 영상 댓글 달기 불가 -> 기능 폐지
         if v_length_res['items'][0]['status']['madeForKids']:
-            print('유아영상')
             return JsonResponse({'data': 'kids'})
 
         # 댓글 기능 막은경우
         if 'commentCount' not in v_length_res['items'][0]['statistics'].keys():
-            print('댓글 막음')
             return JsonResponse({'data': 'no comment'})
 
         # 최초 영상에 대한 요청
         if current_video != videoId:
-            print("New")
+            print("최초요청")
             current_video = videoId
-
+            current_type = order_type
+            current_korean = 0
+            current_spam = 0
             results = youtube.commentThreads().list(
                 videoId=videoId,
-                order='relevance',
-                part='snippet, replies',
+                order=order_type,
+                part='snippet',
                 textFormat='plainText',
                 maxResults=100,
             ).execute()
             comments = self.get_comments(results, now_time)
-        else:
-            if current_token != 'no':
-                print("old")
-                results = youtube.commentThreads().list(
-                    videoId=videoId,
-                    order='relevance',
-                    part='snippet, replies',
-                    pageToken=current_token,
-                    textFormat='plainText',
-                    maxResults=100,
-                ).execute()
-                comments = self.get_comments(results, now_time)
-            else:
-                return JsonResponse({'data': 'stop it'})
-        pd_comments = pd.DataFrame(comments)
-        print(pd_comments)
-        #print(comments)
-        pd_comments.to_csv('youtube_crawling.csv', mode='w', encoding='utf-8-sig')
-        return JsonResponse({'data':comments})
+        # 동일 영상에 대한 댓글 추가 100개 요청(korean 및 spam 타입 동일)
+        elif current_video == videoId and current_type == order_type and current_token != 'no' and current_korean == \
+                korean and current_spam == spam:
+            results = youtube.commentThreads().list(
+                videoId=videoId,
+                order=order_type,
+                part='snippet',
+                pageToken=current_token,
+                textFormat='plainText',
+                maxResults=100,
+            ).execute()
+            comments = self.get_comments(results, now_time)
+        # 인기 <-> 최신 필터 변경
+        elif current_video == videoId and current_type != order_type:
+            current_type = order_type
+            current_korean = 0
+            current_spam = 0
+            results = youtube.commentThreads().list(
+                videoId=videoId,
+                order=order_type,
+                part='snippet',
+                textFormat='plainText',
+                maxResults=100,
+            ).execute()
+            comments = self.get_comments(results, now_time)
+        # 한국인 및 스팸 필터 변경 (인기 / 최신 상태는 동일)
+        elif current_video == videoId and (current_korean != korean or current_spam != spam):
+            current_korean = korean
+            current_spam = spam
+            results = youtube.commentThreads().list(
+                videoId=videoId,
+                order=order_type,
+                part='snippet',
+                textFormat='plainText',
+                maxResults=100,
+            ).execute()
+            comments = self.get_comments(results, now_time)
+        # state 엔 변화가 없지만 더이상 가져올 댓글이 없는 경우
+        elif current_video == videoId and current_type == order_type and current_token == 'no' and current_korean == \
+                korean and current_spam == spam:
+            return JsonResponse({"data": "stop it"})
+        # filter 종류
+        # 필터 적용 x
+        if korean == 0 and spam == 0:
+            return JsonResponse({'data': comments})
+        # 한국인 필터 적용
+        elif korean == 1 and spam == 0:
+            return JsonResponse({'data': korean_discrimination(comments)})
+        # 스팸 필터 적용
+        elif korean == 0 and spam == 1:
+            return JsonResponse({'data': spam_discrimination(comments)})
+        # 한국인 + 스팸 필터 적용 (선 한국인 후 스팸)
+        elif korean == 1 and spam == 1:
+            return JsonResponse({'data': spam_discrimination(korean_discrimination(comments))})
+        return JsonResponse({'data': 'error'})

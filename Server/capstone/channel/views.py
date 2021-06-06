@@ -79,7 +79,6 @@ def DoRun(link):
             executor.submit(DataSearch, url)
 
 
-
 def RankingSubscribes(channelIds):
     api_key = 'AIzaSyC4poxuFWcR4mChE66JBgKDjbGUFjmRas4'
     youtube = build('youtube', 'v3', developerKey=api_key)
@@ -103,12 +102,10 @@ def RankingSubscribes(channelIds):
                 idRank[channelID] = [channelID,title,img,0]
         except:
             pass
-    print("this is REUSULT")
     final = list(idRank.values())
 
     final.sort(key=lambda data:data[-1], reverse=True)
-
-    print(final)
+    final = final[:10]
     return final
 
 class CommentView(View):
@@ -118,14 +115,30 @@ class CommentView(View):
 
         data = json.loads(request.body)
         url = data['comments']
-        print(url)
-
         # 오류제어 : 시청기록 사용 케이스
         videoId = url[24:]
         if '&t=' in videoId:
             idx = videoId.index('&t=')
             videoId = videoId[:idx]
 
+        # 영상 길이 확인
+        v_length_res = youtube.videos().list(
+            id=videoId,
+            part='contentDetails, statistics,status',
+        ).execute()
+
+        # 영유아 영상 댓글 달기 불가 -> 기능 폐지
+        if v_length_res['items'][0]['status']['madeForKids']:
+            print('유아영상')
+            return JsonResponse({'data': 'kids'})
+
+        # 댓글 기능 막은경우
+        if 'commentCount' not in v_length_res['items'][0]['statistics'].keys():
+            print('댓글 막음')
+            return JsonResponse({'data': 'no comment'})
+        # 댓글 10개 미만
+        if int(v_length_res['items'][0]['statistics']['commentCount']) < 30:
+            return JsonResponse({'one': 'not enough', 'multi': 'not enough', 'skip': 'not enough'})
 
         results = youtube.commentThreads().list(
             videoId=videoId,
@@ -138,7 +151,6 @@ class CommentView(View):
         channelIds = []
 
         for item in results['items']:
-            #comment = item['snippet']['topLevelComment']['snippet']['authorChannelUrl']
             channelId = item['snippet']['topLevelComment']['snippet']['authorChannelId']['value']
             channelIds.append(channelId)
         sendout = RankingSubscribes(channelIds)
