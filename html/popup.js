@@ -2,16 +2,119 @@ let myImage = document.querySelector('img');
 let serverdata;
 var scribeindex;
 
+let com = $('#com');
+
+com.click(function(){
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, {comment: "0"}, function(response) {
+    });
+  });
+}
+);
+
+
+let tim = $('#time');
+
+
+tim.click(function(){
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, {time: "0"}, function(response) {
+    });
+  });
+}
+);
 
 
 
-myImage.onclick = function() {
 
- 
-    
-    let mySrc = myImage.getAttribute('src');
-    if(mySrc == 'images/mainlogo(gray).png') {  // gray
-      myImage.setAttribute ('src','images/mainlogo.png'); //red
+let cup = $('#korea');
+let tea = $('#kcolor');
+
+cup.click( function(){
+  
+  if(tea.text()=="끔"){
+  $('#kcolor').text("켬");
+  $('#kcolor').css('color',"red");
+
+
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, {korean: "1"}, function(response) {
+    });
+  });
+
+
+
+  }
+
+
+
+
+  else if(tea.text()=="켬"){
+  $('#kcolor').text("끔");
+  $('#kcolor').css('color',"gray")
+
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, {korean: "0"}, function(response) {
+    });
+  });
+
+
+
+
+}
+});
+
+let yoong = $('#spam');
+let jung = $('#scolor');
+
+yoong.click( function(){
+  
+  if(jung.text()=="끔"){
+  $('#scolor').text("켬");
+  $('#scolor').css('color',"red");
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, {spam: "1"}, function(response) {
+    });
+  });
+
+  
+  }
+  
+  
+  
+  else if(jung.text()=="켬"){
+  $('#scolor').text("끔");
+  $('#scolor').css('color',"gray")
+  
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, {spam: "0"}, function(response) {
+    });
+  });
+
+
+}
+});
+
+let rcmd = $('#subsc');
+let menual = $('#readme');
+
+menual.click( function(){
+  window.open("https://github.com/Gosungjoo/2021-1-Capstone-project");
+  
+});
+
+
+let sibal =$('#subscribe');
+let qudtls = $('#forsubsc');
+let goback = $('#among');
+
+sibal.hide();
+
+rcmd.click ( function() {
+  
+      qudtls.hide();
+      sibal.show();
+      
       let taburl;
       getCurrentTabUrl(function(youtubeurl,callback) {
         alert(youtubeurl.substr(8,));    
@@ -41,11 +144,14 @@ myImage.onclick = function() {
 
         
 
-    } else {
-      myImage.setAttribute ('src', 'images/mainlogo(gray).png');
-      scribeindex = -1;
-    }
-}
+  
+    });
+
+goback.click( function(){
+  sibal.hide();
+  qudtls.show();
+  
+});
 
 
 

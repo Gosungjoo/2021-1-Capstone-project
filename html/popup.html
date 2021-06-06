@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700&display=swap" rel="stylesheet">
   <style type="text/css">
+  @font-face {
+    font-family: 'minsoo';
+    src: url("JalnanOTF.otf");
+  }
   <!--
     A:link{text-decoration:none; color:black}
     A:visited{text-decoration:none; color:black}
@@ -36,7 +41,8 @@
 
 
 <!--TABLE(subscribe)-->
-<div id = "subscribe" , style="width:100%; height:400px;margin-top:20px; overflow:auto">
+<div id = "subscribe">
+<div style="width:100%; height:430px;margin-top:20px; overflow:auto">
   <div id = "warp" >
 <table id="tg">
   <thead>
@@ -46,14 +52,19 @@
     </tr>
   </thead>
   </table>
+  
   </div>
-</div>>
+
+</div>
 
 <!--infomation-->
  <!--<p>scrollTop:<span class="top">0</span></p>
   <p>scrollH:<span class="H">0</span></p>
   <p>scrollCH:<span class="CH">0</span></p>-->
+  <br>
+  <span id="among"><img src="images/started.png" width="80" height="90" alt="backspace"></span>
   <div id ="urls">  </div>
+  </div>
 
   
 
@@ -61,15 +72,36 @@
 
 </ul>
 
+
+
+
+
 <!--Test URL-->
 <!--Test Server to URL-->
-
+  <div id="forsubsc">
+   <span style="font-family:'minsoo'; color:red; font-size:3em;"> ver.Beta</span>
+   <br>
+   <br>
+   <br>
+   <br>
+   <div id="readme" class="icon-readme" style="font-size:3em;"><span style="font-family:'minsoo';"> 사용설명서</span></div>
+   <br>
+   <div id = "com" class="icon-comment" style="font-size:3em;"><span style="font-family:'minsoo';"> 댓글 감상</span></div>
+   <br>
+   <div id = "time" class="icon-time" style="font-size:3em;"><span style="font-family:'minsoo';"> 타임라인 표시</span></div>
+   <br>
+   <div id = "subsc" class="icon-cup" style="font-size:3em;"><span style="font-family:'minsoo';"> 채널 추천</span></div>
+   <br>
+   <div id = "korea" class="icon-korean" style="font-size:3em;"><span style="font-family:'minsoo';"> 한글 필터 <span id = "kcolor" style="color:gray;">끔</span></div>
+   <br>
+   <div id = "spam" class="icon-spam" style="font-size:3em;"><span style="font-family:'minsoo';"> 스팸 필터 <span id = "scolor" style="color:gray;">끔</span></span></div>
+   <br>
+   <br>
+   <br>
+   <br>
    <img src="images/mainlogo(gray).png"  alt="subscribe">
-   <ul>
-
-</ul>
-   <img src="images/button(letf).png" style="max-width: 25%; height: auto;" alt="comment">
-
+  </div>
+  
 
    <!-- SCRIPT  -->
    <script src="popup.js" ></script>

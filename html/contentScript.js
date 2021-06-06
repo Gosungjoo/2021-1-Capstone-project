@@ -7,8 +7,60 @@ let comments_length;
 
 var ontimeline = 1;
 var oncomment = 1;
-var ordertype = "relevance"; //  time
+var korean = 0;
+var spam = 0;
+var ordertype = "time"; //  time
 
+
+
+
+chrome.runtime.onMessage.addListener(function (response, sendResponse) {
+  if(response.spam == 1){
+    spam = 1;
+    //alert("스팸1");
+    updateSetting();
+  }
+  else if(response.spam == 0){
+    spam = 0;
+    
+    updateSetting();
+    //alert("스팸0");
+  }
+  else if(response.korean == 1){
+    korean = 1;
+    
+    updateSetting();
+    //alert("1");
+  }
+  else if(response.korean == 0){
+    korean = 0;
+    
+    updateSetting();
+    //alert("0");
+  }
+  else if(response.time == 0){
+    if(ontimeline == 0){
+      ontimeline =1 ;
+    }
+    else{
+      ontimeline =0;
+    }
+    updateSetting();
+
+  }
+  
+  else if(response.comment == 0){
+    if( oncomment== 0){
+      oncomment =1 ;
+    }
+    else{
+      oncomment =0;
+    }
+    updateSetting();
+  }
+
+
+});
 
 // resizable용 css파일
 $('head').append('<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">');
@@ -25,7 +77,7 @@ function requestComments(){
           url: 'http://127.0.0.1:8000/sd/daet',
           method: 'POST',
           async : true,
-          data : JSON.stringify({ "comments" : link.substr(8,),}),
+          data : JSON.stringify({ "comments" : link.substr(8,),"korean" : korean, "spam" : spam , "type" : ordertype}, ),
           dataType :'json',
   
           error: function (request) {
@@ -33,7 +85,7 @@ function requestComments(){
             alert("연결에 오류가 있습니다.");
         },
         success: function (res) {
-          alert(res.data);
+          //alert(res.data);
           comments_data = res.data;
           index = 0;
           
@@ -80,6 +132,7 @@ function requestComments(){
 }
   
 
+
 function requestTimelines(){
 //image객체가 생성되어 속성들을 추가할수 있음
    // image.src = chrome.extension.getURL(images/button(letf).png);
@@ -99,7 +152,7 @@ function requestTimelines(){
          // alert("연결에 오류가 있습니다.");
       },
       success: function (res) {
-        alert(res.one);
+        //alert(res.one);
         timeline_data = res.one;
         if(typeof(timeline_data) == 'string'){
             if(timeline_data == 'kids'){
@@ -170,7 +223,7 @@ function time_compare(){ // 해당시간에 존재하는 타임라인 찾아서 
             setTimeout(function(){
             clearCell();
             ontimeline = true;
-            }, 5000);
+            }, 10000);
             break;
         }
    
@@ -199,7 +252,7 @@ function setTimeCell(imgUrl,name,comment,like,time){
 
 
 function timeCell(){
-    var zCell = '<div id = "timeLine" style ="position:absolute; left:50pt ;top:150;background-color: rgba(200, 200, 200, 0.4);opacity:1.0"> <div id = "timeLineheader" style =" width:150pt;height=50pt; " >   <div id = "timeimage" style="  float: left; width:50pt;height=50pt;"> img </div><div id = rightwindows> <div id = "timename"> name </div>  <div id = "timecomments"> comments </div><div id = "timeLike"> Like </div> </div> </div></div>'
+    var zCell = '<div id = "timeLine" style ="position:absolute; left:50pt ;top:150;background-color: rgba(255, 255, 255, 1.0);opacity:1.0"> <div id = "timeLineheader" style =" width:150pt;height=50pt; " >   <div id = "timeimage" style="  float: left; width:50pt;height=50pt;"> img </div><div id = rightwindows> <div id = "timename"> name </div>  <div id = "timecomments"> comments </div><div id = "timeLike"> Like </div> </div> </div></div>'
     $(document.getElementById("columns")).append(zCell);
 }
 
@@ -216,8 +269,10 @@ function clearCell(){
 
 
 function commentCell(){
-  var zCell = '<div id = "commentsScroll" , style="width:100%; height:200px;margin-top:20px;background-color: rgba(200, 200, 200, 0.4);opacity:1.0;"><div id = "warp" style ="width:100%; height:100%; overflow:auto; overflow-x:hidden;" > 왜? <table id="tg"><thead><tr><td class="tg-baqh">   </td><td class="tg-baqh">   </td></tr></thead></table></div></div>';
-  $(document.getElementsByClassName("style-scope ytd-watch-flexy")[11]).append(zCell);
+
+  var zCell = '<div id = "commentsScroll" , style="position:absolute; left:50pt ;top:150; width:30%; height:200px;background-color: rgba(255, 255, 255, 1.0);opacity:1.0;"><div id = "warp" style ="width:100%; height:80%; overflow:auto; overflow-x:hidden;" >  <table id="tg"><thead><tr><td class="tg-baqh">   </td><td class="tg-baqh">   </td></tr></thead></table></div></div>';
+  $(document.getElementById("columns")).append(zCell);
+  //$(document.getElementsByClassName("style-scope ytd-watch-flexy")[11]).append(zCell);
 }
 
 
@@ -241,6 +296,9 @@ function load_comments(){
 
 
   function addRow(LinkSource,imgUrl,name,upload,comment,like,replie) {
+    
+  var thumb = chrome.runtime.getURL('images/thumb.png');
+
     // table element 찾기
     const Link = LinkSource;
     const table = document.getElementById('tg');
@@ -252,30 +310,82 @@ function load_comments(){
     const newCell1 = newRow1.insertCell(0); // img
     const newCell2 = newRow1.insertCell(1); // name
     const newCell3 = newRow1.insertCell(2); // date
-    const tempCell0 = newRow1.insertCell(3);
+    const newCell4 = newRow1.insertCell(3);
   
     const newRow2 = table.insertRow(-1);
-    const newCell4 = newRow2.insertCell(0); // comment
-    const newCell5 = newRow2.insertCell(1);
-    const newCell6 = newRow2.insertCell(2); // replie
+    const newCell5 = newRow2.insertCell(0); // comment
+    const newCell6 = newRow2.insertCell(1);
+    const newCell7 = newRow2.insertCell(2); //
+    const newCell8 = newRow2.insertCell(3);
    
     //const newRow3 = table.insertRow(-1); // like 
     
+    let cssValue = 'font size="2em" ;color = "gray"';
     // Cell에 텍스트 추가
-    newCell4.innerHTML = "<a href=" +Link+  "target = blank><img src=" +imgUrl+ " width='50'; height='50' >";
-    newCell2.innerHTML = "<a href=" +Link +  "target = blank> &nbsp&nbsp&nbsp<b>" +name+ "</b></a>" + "&nbsp&nbsp&nbsp"+ upload;
-   // newCell3.innerHTML = ;
-    newCell5.innerHTML = comment;
-    newCell6.innerHTML = like;
-    document.querySelector('img').style.mborderRadius="50%";
-    
+    newCell1.innerHTML = "<a href=" +Link+  "target = blank><img src=" +imgUrl+ " width='25'; height='25' top = '25' id = 'gd'>";
+    newCell2.innerHTML = "  <b sytle  = " + cssValue+"> &nbsp&nbsp&nbsp" +name+ "</b>" + "&nbsp&nbsp&nbsp"+ upload +"&nbsp&nbsp&nbsp like &nbsp"+like;
+    //newCell3.innerHTML = "<span>&nbsp &nbsp </span>";
+    //newCell4.innerHTML = "<span>"+like+"</span>";
+    newCell6.innerHTML = comment;
+    //newCell6.innerHTML = like;
+    //$('#gd').style.mborderRadius="50%";
+    //document.getElementById("someImage").src = thumb;
+
     //newCell6.innerHTML = "replie";
     
     //newCell3.innerHTML = rank;
   }
   
+ 
+function updateSetting(){
+
+  if(ontimeline == 1){
+    $('#iconT').css('color','white');
+  }
+  else{
+    $('#iconT').css('color','gray');
+  }
+  if(oncomment == 1){
+    $('#iconC').css('color','white');
+  }
+  else{
+    $('#iconC').css('color','gray');
+  }
+  if(korean == 1){
+    $('#iconK').css('color','white');
+  }
+  else{
+    $('#iconK').css('color','gray');
+  }
+  if(spam == 1){
+    $('#iconS').css('color','white');
+  }
+  else{
+    $('#iconS').css('color','gray');
+  }
+  if(ontimeline == 0){
+    hideTimeline();
+    $('#iconT').css('color','gray');
+  }
+
+  if(oncomment == 0){
+    hideComments();
+    $('#iconC').css('color','gray');
+  }
+  if(ontimeline == 1){
+    showTimeline();
+    $('#iconT').css('color','white');
+  }
+
+  if(oncomment == 1){
+    showComments();
+    $('#iconC').css('color','white');
+  }
 
 
+
+
+}
 
 
 
@@ -284,16 +394,29 @@ function load_comments(){
 
 var bar = '<input type="range" value="0" min="0" max="100" id = "range"></input>';
 var bar2 = '<span id="value"></span>';
-var bar3 = '<span id="outputVar"></span>';
+var bar3 = '<span id="outputVar"> &nbsp;</span>';
+var barTime = '<span id="iconT"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Time &nbsp;</span>';
+var barComment = '<span id="iconC">Commnet &nbsp;</span>';
+var barFkorean = '<span id="iconK">Korean &nbsp;</span>';
+var barFspan = '<span id="iconS">Spam &nbsp;</span>';
+
+
 $(document.getElementsByClassName("ytp-left-controls")).append(bar);
 $(document.getElementsByClassName("ytp-left-controls")).append(bar2);
-$(document.getElementsByClassName("ytp-left-controls")).append(bar3);
+$(document.getElementsByClassName("ytp-left-controls")).append(barTime);
+$(document.getElementsByClassName("ytp-left-controls")).append(barComment);
 
+$(document.getElementsByClassName("ytp-left-controls")).append(barFkorean);
+$(document.getElementsByClassName("ytp-left-controls")).append(barFspan);
+
+
+
+updateSetting()
 var slider = document.getElementById("range");
 var output = document.getElementById("value");
 var outputVarNo = document.getElementById("outputVar");
 function update(){
-   output.innerHTML = slider.value;
+   output.innerHTML = slider.value/100;
    $("#commentsScroll").css('opacity', slider.value/100);
    $("#timeLine").css('opacity', slider.value/100);
   };
@@ -317,7 +440,7 @@ update();
 
 
 function comments_setting(){
-  if(comments_end != comments_length-1){}
+  if(comments_end != comments_length-1){
 
   if(comments_end + 10 <comments_length){
     comments_end += 10;
@@ -325,7 +448,9 @@ function comments_setting(){
   else{
     comments_end = comments_length-1;
   }
-
+}
+else{
+  alert("end!");}
 
 }
 
@@ -333,14 +458,26 @@ function comments_setting(){
 
 
 function drag_resize(){
-  $("#commentsScroll").mCustomScrollbar({
-    mouseWheel:{ scrollAmount: 300 },
+  $("#warp").mCustomScrollbar({
+    theme:"dark",
+    mouseWheel:{ scrollAmount: 500 },
     callbacks:{
       onTotalScroll:function(){
-        alert("Scrolled to end of content."); // 여기에 추가하자공
+        alert("loading");
+        // alert("Scrolled to end of content."); // 여기에 추가하자공
         comments_setting();
         load_comments();
+        
+
+      },
+      whileScrolling:function(){
+        $("#warp").css("height","80%");
+        $('#warp').mCustomScrollbar("scrollTo","bottom",{
+          scrollInertia:1000
+      });    
+    
       }
+
   }
   });
   $(document.getElementById("timeLine")).draggable({}
@@ -382,7 +519,7 @@ $("#warp").css('overflow-x', "hidden");
 
 
 function hideTimeline(){
-  $('#timeline').hide();
+  $('#timeLine').hide();
 }
 
 function hideComments(){
@@ -391,7 +528,7 @@ function hideComments(){
 
 
 function showTimeline(){
-  $('#timeline').show();
+  $('#timeLine').show();
 }
 
 function showComments(){
